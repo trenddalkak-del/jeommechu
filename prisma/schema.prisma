@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id           String   @id
+  kakaoId      String?  @unique @map("kakao_id")
+  locationLat  Float?   @map("location_lat")
+  locationLng  Float?   @map("location_lng")
+  distancePref Int      @default(10) @map("distance_pref")
+  allergies    String   @default("[]")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  mealRecords MealRecord[]
+  swipeLogs   SwipeLog[]
+  favorites   Favorite[]
+  eventLogs   EventLog[]
+
+  @@map("users")
+}
+
+model Restaurant {
+  id           String   @id @default(cuid())
+  kakaoPlaceId String   @unique @map("kakao_place_id")
+  name         String
+  category     String
+  lat          Float
+  lng          Float
+  rating       Float?
+  cachedAt     DateTime @default(now()) @map("cached_at")
+
+  mealRecords MealRecord[]
+  swipeLogs   SwipeLog[]
+  favorites   Favorite[]
+
+  @@map("restaurants")
+}
+
+model MealRecord {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  restaurantId String   @map("restaurant_id")
+  category     String
+  eatenAt      DateTime @default(now()) @map("eaten_at")
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@map("meal_records")
+}
+
+model SwipeLog {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  restaurantId String   @map("restaurant_id")
+  direction    String
+  category     String
+  swipedAt     DateTime @default(now()) @map("swiped_at")
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@map("swipe_logs")
+}
+
+model Favorite {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  restaurantId String   @map("restaurant_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, restaurantId])
+  @@map("favorites")
+}
+
+model EventLog {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  eventType String   @map("event_type")
+  metadata  String   @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("event_logs")
+}
