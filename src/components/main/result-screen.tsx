@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getUserId } from "@/lib/user";
 import { motion } from "framer-motion";
 import type { Restaurant, WeatherInfo } from "@/app/main/page";
+import { parseCategory, generateHashtags } from "@/lib/utils";
 import SafeImage from "./safe-image";
 
 function logEvent(eventType: string, metadata: Record<string, unknown>) {
@@ -38,6 +39,13 @@ export default function ResultScreen({
   const distanceMin = restaurant.distance
     ? Math.round(parseInt(restaurant.distance) / 80)
     : null;
+
+  // 카테고리 파싱
+  const { badge } = parseCategory(restaurant.category_name || restaurant.category_group_name);
+  const hashtags = generateHashtags(
+    restaurant.category_name || restaurant.category_group_name,
+    restaurant.google_types
+  );
 
   const kakaoMapUrl = `https://map.kakao.com/link/to/${encodeURIComponent(restaurant.place_name)},${restaurant.y},${restaurant.x}`;
   const naverMapUrl = `https://map.naver.com/v5/directions/-/${restaurant.y},${restaurant.x},${encodeURIComponent(restaurant.place_name)},-/walk`;
@@ -187,8 +195,6 @@ export default function ResultScreen({
               alt={restaurant.place_name}
               category={restaurant.category_name || restaurant.category_group_name}
               className="absolute inset-0 w-full h-full object-cover"
-              loading="eager"
-             
             />
             {/* Gradient overlay — bottom 50% */}
             <div
@@ -224,33 +230,38 @@ export default function ResultScreen({
             )}
             {/* Text content at bottom */}
             <div className="absolute bottom-0 left-0 right-0 p-6 z-[5]">
-              <h2 className="text-2xl font-bold text-white leading-tight">
+              <h2 className="text-[28px] font-bold text-white leading-tight">
                 {restaurant.place_name}
               </h2>
             </div>
           </motion.div>
 
+          {/* 카테고리 배지 + 해시태그 */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.2 }}
-            className="flex flex-col items-center gap-1 mb-6 text-center"
+            className="flex flex-col items-center gap-1 mb-4 text-center"
           >
-            <div className="flex flex-wrap items-center justify-center gap-2 mb-1">
-              {restaurant.category_group_name && (
-                <span className="text-sm text-[#FF6B35] font-medium">
-                  {restaurant.category_group_name}
+            <div className="flex flex-wrap items-center justify-center gap-2 mb-2">
+              <span className="text-sm bg-[#FF6B35] text-white px-3 py-1 rounded-full font-medium">
+                {badge}
+              </span>
+              {hashtags.map((tag, i) => (
+                <span key={i} className="text-sm text-gray-600">
+                  #{tag}
                 </span>
-              )}
-              {distanceMin !== null && (
-                <>
-                  <span className="text-gray-300">•</span>
-                  <span className="text-sm text-gray-600 font-medium">
-                    🚶 도보 {distanceMin}분
-                  </span>
-                </>
-              )}
+              ))}
             </div>
+            
+            {distanceMin !== null && (
+              <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                <span>🚶 도보 {distanceMin}분</span>
+                <span className="text-gray-300">·</span>
+                <span>{restaurant.distance}m</span>
+              </div>
+            )}
+            
             {restaurant.road_address_name && (
               <p className="text-gray-500 text-sm">
                 {restaurant.road_address_name}

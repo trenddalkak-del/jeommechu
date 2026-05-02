@@ -24,6 +24,7 @@ export interface Restaurant {
   road_address_name: string;
   photo_url: string | null;
   open_now?: boolean; // undefined = no info
+  google_types?: string[]; // Google Places types for hashtags
 }
 
 export interface WeatherInfo {

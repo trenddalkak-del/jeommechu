@@ -6,6 +6,10 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient() {
+  // Server-side only
+  if (typeof window !== "undefined") {
+    throw new Error("PrismaClient should not be used in browser");
+  }
   const adapter = new PrismaLibSql({ url: "file:prisma/dev.db" });
   return new PrismaClient({ adapter });
 }

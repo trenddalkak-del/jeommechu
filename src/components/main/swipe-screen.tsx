@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
 import type { Restaurant } from "@/app/main/page";
-import { extractSubcategory } from "@/lib/utils";
+import { extractSubcategory, parseCategory, generateHashtags } from "@/lib/utils";
 import { getUserId } from "@/lib/user";
 import SafeImage from "./safe-image";
 
@@ -178,6 +178,13 @@ function SwipeCard({
   const nopeOpacity = useTransform(x, [-100, 0], [1, 0]);
 
   const distMin = restaurant.distance ? Math.round(parseInt(restaurant.distance) / 80) : null;
+  
+  // 카테고리 파싱
+  const { badge } = parseCategory(restaurant.category_name || restaurant.category_group_name);
+  const hashtags = generateHashtags(
+    restaurant.category_name || restaurant.category_group_name,
+    restaurant.google_types
+  );
 
   return (
     <motion.div
@@ -202,7 +209,6 @@ function SwipeCard({
           category={restaurant.category_name || restaurant.category_group_name}
           className="absolute inset-0 w-full h-full object-cover"
           loading="eager"
-         
         />
 
         {/* Gradient overlay — bottom 50% */}
@@ -233,21 +239,31 @@ function SwipeCard({
 
         {/* Text content at bottom */}
         <div className="absolute bottom-0 left-0 right-0 p-5 z-[5]">
+          {/* 식당명 */}
           <h2 className="text-2xl font-bold text-white leading-tight mb-2">
             {restaurant.place_name}
           </h2>
+          
+          {/* 카테고리 배지 + 해시태그 */}
           <div className="flex flex-wrap items-center gap-2 mb-2">
-            {restaurant.category_group_name && (
-              <span className="text-xs bg-white/20 backdrop-blur-sm text-white px-2.5 py-1 rounded-full font-medium">
-                {restaurant.category_group_name}
+            <span className="text-xs bg-[#FF6B35] text-white px-2.5 py-1 rounded-full font-medium">
+              {badge}
+            </span>
+            {hashtags.map((tag, i) => (
+              <span key={i} className="text-xs text-white/90">
+                #{tag}
               </span>
-            )}
-            {restaurant.distance && (
-              <span className="text-xs text-white/80">
-                {restaurant.distance}m{distMin !== null ? ` · 도보 ${distMin}분` : ""}
-              </span>
-            )}
+            ))}
           </div>
+          
+          {/* 거리 정보 */}
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs text-white/80">
+              {restaurant.distance}m{distMin !== null ? ` · 도보 ${distMin}분` : ""}
+            </span>
+          </div>
+          
+          {/* 주소 */}
           {restaurant.road_address_name && (
             <p className="text-white/70 text-xs">{restaurant.road_address_name}</p>
           )}

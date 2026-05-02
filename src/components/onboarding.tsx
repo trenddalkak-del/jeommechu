@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 const FOOD_TAGS = [
   "우유/유제품", "계란", "땅콩", "갑각류", "생선", "밀가루/글루텐",
@@ -71,10 +72,9 @@ export default function Onboarding() {
     router.push("/main");
   };
 
-  const handleKakaoLogin = () => {
-    // [Phase 2] 카카오 OAuth 연동 예정
-    // 현재는 온보딩 완료로 대체합니다.
-    handleComplete();
+  const handleKakaoLogin = async () => {
+    localStorage.setItem("onboarding", JSON.stringify({ lat, lng, allergies, distanceMin }));
+    await signIn("kakao", { callbackUrl: "/main" });
   };
 
   return (

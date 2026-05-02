@@ -3,7 +3,8 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import type { Restaurant, WeatherInfo } from "@/app/main/page";
-import SafeImage from "./safe-image";
+import { getCategoryImage } from "@/lib/category-images";
+import { parseCategory, generateHashtags } from "@/lib/utils";
 
 const weatherEmoji: Record<string, string> = {
   Clear: "☀️", Clouds: "☁️", Rain: "🌧️", Drizzle: "🌦️", Snow: "❄️", Thunderstorm: "⛈️",
@@ -262,7 +263,16 @@ export default function ListScreen({
       {!isEmpty && !isError && (
         <div className="px-5 space-y-3">
           {restaurants.map((r, i) => {
+            const imgSrc = r.photo_url || getCategoryImage(r.category_name || r.category_group_name);
             const distMin = r.distance ? Math.round(parseInt(r.distance) / 80) : null;
+            
+            // 카테고리 파싱
+            const { badge } = parseCategory(r.category_name || r.category_group_name);
+            const hashtags = generateHashtags(
+              r.category_name || r.category_group_name,
+              r.google_types
+            );
+            
             return (
               <motion.div
                 key={r.id}
@@ -278,11 +288,19 @@ export default function ListScreen({
                       {r.place_name}
                     </h3>
                     <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                      {r.category_group_name && (
-                        <span className="text-xs bg-[#FF6B35]/10 text-[#FF6B35] px-2 py-0.5 rounded-full font-medium">
-                          {r.category_group_name}
+                      {/* 카테고리 배지 */}
+                      <span className="text-xs bg-[#FF6B35] text-white px-2 py-0.5 rounded-full font-medium">
+                        {badge}
+                      </span>
+                      
+                      {/* 해시태그 */}
+                      {hashtags.map((tag, idx) => (
+                        <span key={idx} className="text-xs text-gray-500">
+                          #{tag}
                         </span>
-                      )}
+                      ))}
+                    </div>                    
+                    <div className="flex items-center gap-2 mt-1.5">
                       {/* Open / Closed badge */}
                       {r.open_now === true && (
                         <span className="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-medium border border-green-100">
@@ -299,6 +317,7 @@ export default function ListScreen({
                         {distMin !== null ? ` · ${distMin}분` : ""}
                       </span>
                     </div>
+                    
                     {r.road_address_name && (
                       <p className="text-gray-400 text-xs mt-1.5 truncate">
                         {r.road_address_name}
@@ -307,13 +326,10 @@ export default function ListScreen({
                   </div>
                   {/* Square thumbnail */}
                   <div className="w-24 h-24 shrink-0 m-3 rounded-xl overflow-hidden">
-                    <SafeImage
-                      src={r.photo_url}
+                    <img
+                      src={imgSrc}
                       alt={r.place_name}
-                      category={r.category_name || r.category_group_name}
                       className="w-full h-full object-cover"
-                      loading="lazy"
-                     
                     />
                   </div>
                 </div>

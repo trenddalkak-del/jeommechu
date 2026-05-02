@@ -14,18 +14,18 @@ interface PlacesSearchResult {
     currentOpeningHours?: {
       openNow?: boolean;
     };
+    types?: string[];
   }>;
 }
 
 export interface PlaceInfo {
   photoUrl: string | null;
   openNow?: boolean; // undefined = no info available
+  types?: string[]; // Google Places types for hashtags
 }
 
 /**
- * Get photo and current open status for a restaurant using Places API (New).
- * Prefers landscape photos (width > height) because food shots are usually
- * landscape, while storefront/exterior shots are often portrait.
+ * Get photo, current open status, and types for a restaurant using Places API (New).
  */
 async function getPlaceInfo(
   name: string,
@@ -39,7 +39,7 @@ async function getPlaceInfo(
       headers: {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": API_KEY,
-        "X-Goog-FieldMask": "places.id,places.photos,places.currentOpeningHours",
+        "X-Goog-FieldMask": "places.id,places.photos,places.currentOpeningHours,places.types",
       },
       body: JSON.stringify({
         textQuery,
@@ -57,32 +57,27 @@ async function getPlaceInfo(
 
     // Extract open status (undefined if field not present)
     const openNow = place.currentOpeningHours?.openNow;
+    
+    // Extract types for hashtags
+    const types = place.types;
 
     // Pick best photo — prefer landscape (food/interior)
-    // Skip portrait photos (likely storefront/exterior)
     const photos = place.photos;
-    if (!photos || photos.length === 0) return { photoUrl: null, openNow };
+    if (!photos || photos.length === 0) return { photoUrl: null, openNow, types };
 
-    const landscape = photos.filter((p) => p.widthPx > p.heightPx);
+    const landscape = photos.filter((p) => p.widthPx >= p.heightPx);
     const notTooPortrait = photos.filter((p) => p.heightPx <= p.widthPx * 1.3);
     const best = landscape[0] || notTooPortrait[0] || photos[0];
 
     const photoUrl = `${PLACES_BASE}/${best.name}/media?maxWidthPx=800&key=${API_KEY}`;
-    return { photoUrl, openNow };
+    return { photoUrl, openNow, types };
   } catch {
     return { photoUrl: null };
   }
 }
 
 /**
- * Build a photo media URL for a given photo name and max width.
- */
-export function buildPhotoUrl(photoName: string, maxWidthPx: number): string {
-  return `${PLACES_BASE}/${photoName}/media?maxWidthPx=${maxWidthPx}&key=${API_KEY}`;
-}
-
-/**
- * Batch fetch photo + open status for multiple restaurants.
+ * Batch fetch photo + open status + types for multiple restaurants.
  * Returns Map<place_name, PlaceInfo>
  */
 export async function batchGetPhotos(

@@ -1,18 +1,42 @@
 const DEVICE_ID_KEY = "device_id";
+const SESSION_USER_ID_KEY = "session_user_id";
 
 /**
- * 디바이스 고유 ID를 반환합니다.
- * 최초 접속 시 UUID v4를 생성해 localStorage에 저장하고, 이후 재사용합니다.
+ * 현재 사용자 ID를 반환합니다.
+ * 로그인된 경우 세션에서 가져온 DB 유저 ID를, 아닌 경우 디바이스 ID를 사용합니다.
  */
 export function getUserId(): string {
   if (typeof window === "undefined") return "";
 
+  // 로그인된 세션 유저 ID가 있으면 우선 사용
+  const sessionUserId = localStorage.getItem(SESSION_USER_ID_KEY);
+  if (sessionUserId) {
+    return sessionUserId;
+  }
+
+  // 미로그인 시 디바이스 ID fallback
   let id = localStorage.getItem(DEVICE_ID_KEY);
   if (!id) {
     id = crypto.randomUUID();
     localStorage.setItem(DEVICE_ID_KEY, id);
   }
   return id;
+}
+
+/**
+ * 로그인 성공 후 세션 유저 ID를 저장합니다.
+ */
+export function setSessionUserId(userId: string): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(SESSION_USER_ID_KEY, userId);
+}
+
+/**
+ * 로그아웃 시 세션 유저 ID를 제거합니다.
+ */
+export function clearSessionUserId(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(SESSION_USER_ID_KEY);
 }
 
 /**

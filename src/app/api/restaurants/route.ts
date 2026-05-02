@@ -58,10 +58,10 @@ export async function GET(request: NextRequest) {
       return true;
     }).sort((a, b) => parseInt(a.distance || "0") - parseInt(b.distance || "0"));
 
-    // Fetch Google Places data (photo + open status)
+    // Fetch Google Places data (photo + open status + types)
     const placeInfoMap = await batchGetPhotos(baseFiltered);
 
-    // Attach photo_url and open_now; filter out confirmed-closed places
+    // Attach photo_url, open_now, and google_types; filter out confirmed-closed places
     const withPlaceInfo = baseFiltered
       .map((r) => {
         const info = placeInfoMap.get(r.place_name);
@@ -69,6 +69,7 @@ export async function GET(request: NextRequest) {
           ...r,
           photo_url: info?.photoUrl || null,
           open_now: info?.openNow, // undefined = no info
+          google_types: info?.types, // for hashtags
         };
       })
       .filter((r) => r.open_now !== false); // exclude confirmed closed
