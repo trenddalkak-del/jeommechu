@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import type { Restaurant, WeatherInfo } from "@/app/main/page";
-import { getCategoryImage } from "@/lib/category-images";
+import SafeImage from "./safe-image";
 
 const weatherEmoji: Record<string, string> = {
   Clear: "☀️", Clouds: "☁️", Rain: "🌧️", Drizzle: "🌦️", Snow: "❄️", Thunderstorm: "⛈️",
@@ -262,7 +262,6 @@ export default function ListScreen({
       {!isEmpty && !isError && (
         <div className="px-5 space-y-3">
           {restaurants.map((r, i) => {
-            const imgSrc = r.photo_url || getCategoryImage(r.category_name || r.category_group_name);
             const distMin = r.distance ? Math.round(parseInt(r.distance) / 80) : null;
             return (
               <motion.div
@@ -308,10 +307,13 @@ export default function ListScreen({
                   </div>
                   {/* Square thumbnail */}
                   <div className="w-24 h-24 shrink-0 m-3 rounded-xl overflow-hidden">
-                    <img
-                      src={imgSrc}
+                    <SafeImage
+                      src={r.photo_url}
                       alt={r.place_name}
+                      category={r.category_name || r.category_group_name}
                       className="w-full h-full object-cover"
+                      loading="lazy"
+                     
                     />
                   </div>
                 </div>

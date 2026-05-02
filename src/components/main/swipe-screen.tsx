@@ -5,6 +5,7 @@ import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-mo
 import type { Restaurant } from "@/app/main/page";
 import { extractSubcategory } from "@/lib/utils";
 import { getUserId } from "@/lib/user";
+import SafeImage from "./safe-image";
 
 const SWIPE_THRESHOLD = 100;
 
@@ -194,18 +195,15 @@ function SwipeCard({
       className="absolute inset-0 cursor-grab active:cursor-grabbing"
     >
       <div className="relative h-full w-full rounded-2xl overflow-hidden shadow-xl">
-        {/* Full cover photo or placeholder */}
-        {restaurant.photo_url ? (
-          <img
-            src={restaurant.photo_url}
-            alt={restaurant.place_name}
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-        ) : (
-          <div className="absolute inset-0 w-full h-full bg-gray-200 flex items-end justify-start p-5">
-            <span className="text-gray-500 text-xl font-bold leading-tight">{restaurant.place_name}</span>
-          </div>
-        )}
+        {/* Full cover photo with skeleton + error fallback */}
+        <SafeImage
+          src={restaurant.photo_url}
+          alt={restaurant.place_name}
+          category={restaurant.category_name || restaurant.category_group_name}
+          className="absolute inset-0 w-full h-full object-cover"
+          loading="eager"
+         
+        />
 
         {/* Gradient overlay — bottom 50% */}
         <div
@@ -235,7 +233,7 @@ function SwipeCard({
 
         {/* Text content at bottom */}
         <div className="absolute bottom-0 left-0 right-0 p-5 z-[5]">
-          <h2 className="text-[28px] font-bold text-white leading-tight mb-2">
+          <h2 className="text-2xl font-bold text-white leading-tight mb-2">
             {restaurant.place_name}
           </h2>
           <div className="flex flex-wrap items-center gap-2 mb-2">

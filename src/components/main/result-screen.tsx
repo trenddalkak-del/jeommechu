@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getUserId } from "@/lib/user";
 import { motion } from "framer-motion";
 import type { Restaurant, WeatherInfo } from "@/app/main/page";
+import SafeImage from "./safe-image";
 
 function logEvent(eventType: string, metadata: Record<string, unknown>) {
   fetch("/api/events", {
@@ -181,17 +182,14 @@ export default function ResultScreen({
             className="w-full relative rounded-2xl overflow-hidden shadow-xl mb-6"
             style={{ aspectRatio: "3/4" }}
           >
-            {restaurant.photo_url ? (
-              <img
-                src={restaurant.photo_url}
-                alt={restaurant.place_name}
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-            ) : (
-              <div className="absolute inset-0 w-full h-full bg-gray-200 flex items-end justify-start p-6">
-                <span className="text-gray-500 text-2xl font-bold leading-tight">{restaurant.place_name}</span>
-              </div>
-            )}
+            <SafeImage
+              src={restaurant.photo_url}
+              alt={restaurant.place_name}
+              category={restaurant.category_name || restaurant.category_group_name}
+              className="absolute inset-0 w-full h-full object-cover"
+              loading="eager"
+             
+            />
             {/* Gradient overlay — bottom 50% */}
             <div
               className="absolute inset-0"
@@ -226,7 +224,7 @@ export default function ResultScreen({
             )}
             {/* Text content at bottom */}
             <div className="absolute bottom-0 left-0 right-0 p-6 z-[5]">
-              <h2 className="text-[28px] font-bold text-white leading-tight">
+              <h2 className="text-2xl font-bold text-white leading-tight">
                 {restaurant.place_name}
               </h2>
             </div>

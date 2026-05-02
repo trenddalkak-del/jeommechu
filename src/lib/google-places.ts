@@ -24,6 +24,8 @@ export interface PlaceInfo {
 
 /**
  * Get photo and current open status for a restaurant using Places API (New).
+ * Prefers landscape photos (width > height) because food shots are usually
+ * landscape, while storefront/exterior shots are often portrait.
  */
 async function getPlaceInfo(
   name: string,
@@ -57,10 +59,11 @@ async function getPlaceInfo(
     const openNow = place.currentOpeningHours?.openNow;
 
     // Pick best photo — prefer landscape (food/interior)
+    // Skip portrait photos (likely storefront/exterior)
     const photos = place.photos;
     if (!photos || photos.length === 0) return { photoUrl: null, openNow };
 
-    const landscape = photos.filter((p) => p.widthPx >= p.heightPx);
+    const landscape = photos.filter((p) => p.widthPx > p.heightPx);
     const notTooPortrait = photos.filter((p) => p.heightPx <= p.widthPx * 1.3);
     const best = landscape[0] || notTooPortrait[0] || photos[0];
 
@@ -69,6 +72,13 @@ async function getPlaceInfo(
   } catch {
     return { photoUrl: null };
   }
+}
+
+/**
+ * Build a photo media URL for a given photo name and max width.
+ */
+export function buildPhotoUrl(photoName: string, maxWidthPx: number): string {
+  return `${PLACES_BASE}/${photoName}/media?maxWidthPx=${maxWidthPx}&key=${API_KEY}`;
 }
 
 /**
