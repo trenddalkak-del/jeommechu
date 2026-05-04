@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { getCategoryImage } from "@/lib/category-images";
 
 interface SafeImageProps {
   /** Legacy single URL. Ignored when srcs is provided and non-empty. */
@@ -17,13 +16,12 @@ interface SafeImageProps {
 /**
  * Image component with skeleton loading and multi-URL fallback.
  * - Tries each URL in srcs (or src) in order.
- * - Falls back to category image only when ALL URLs fail or none are provided.
+ * - Falls back to a solid background with text when ALL URLs fail or none are provided.
  */
 export default function SafeImage({
   src,
   srcs,
   alt,
-  category,
   className = "",
   loading = "lazy",
 }: SafeImageProps) {
@@ -39,18 +37,19 @@ export default function SafeImage({
     urls.length > 0 ? "loading" : "error"
   );
 
-  const fallbackSrc = getCategoryImage(category || "");
+  const renderFallback = () => (
+    <div
+      className={`${className} bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center`}
+    >
+      <span className="text-gray-400 font-bold text-xl px-4 text-center break-words">
+        {alt || "No Image"}
+      </span>
+    </div>
+  );
 
-  // No URLs at all → show category fallback immediately (no skeleton)
+  // No URLs at all → show fallback immediately (no skeleton)
   if (urls.length === 0) {
-    return (
-      <img
-        src={fallbackSrc}
-        alt={alt}
-        className={className}
-        loading={loading}
-      />
-    );
+    return renderFallback();
   }
 
   const handleError = () => {
@@ -59,13 +58,16 @@ export default function SafeImage({
       setUrlIndex((prev) => prev + 1);
       setImageStatus("loading");
     } else {
-      // All URLs failed → show category fallback
+      // All URLs failed → show fallback
       setImageStatus("error");
     }
   };
 
   const currentUrl = urls[urlIndex];
-  const displaySrc = imageStatus === "error" ? fallbackSrc : currentUrl;
+
+  if (imageStatus === "error") {
+    return renderFallback();
+  }
 
   return (
     <>
@@ -74,7 +76,7 @@ export default function SafeImage({
       )}
       <img
         key={currentUrl}
-        src={displaySrc}
+        src={currentUrl}
         alt={alt}
         className={`${className} ${imageStatus === "loading" ? "opacity-0" : "opacity-100"}`}
         style={imageStatus === "loading" ? { position: "absolute", width: "1px", height: "1px", padding: 0, margin: "-1px", overflow: "hidden", clip: "rect(0, 0, 0, 0)", whiteSpace: "nowrap", border: 0 } : {}}

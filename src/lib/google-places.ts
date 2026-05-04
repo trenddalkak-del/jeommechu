@@ -135,7 +135,7 @@ async function getPlaceInfo(
     })));
 
     if (!photos || photos.length === 0) {
-      console.log(`[GooglePlaces] ${name}: no photos -> using category image`);
+      console.log(`[GooglePlaces] ${name}: no photos`);
       return { photoUrl: null, photoUrls: [], openNow, types };
     }
 

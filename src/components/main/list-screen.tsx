@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import SafeImage from "./safe-image";
 import { useEffect, useState } from "react";
 import type { Restaurant, WeatherInfo } from "@/app/main/page";
-import { parseCategory, generateHashtags, generateGreeting, calculateWalkingMinutes } from "@/lib/utils";
+import { parseCategory, generateHashtags, generateGreeting } from "@/lib/utils";
 
 const weatherEmoji: Record<string, string> = {
   Clear: "☀️", Clouds: "☁️", Rain: "🌧️", Drizzle: "🌦️", Snow: "❄️", Thunderstorm: "⛈️",
@@ -279,7 +279,8 @@ export default function ListScreen({
       {!isEmpty && !isError && (
         <div className="px-5 space-y-3">
           {restaurants.map((r, i) => {
-            const distMin = calculateWalkingMinutes(r.distance);
+            const imgSrc = r.photo_url;
+            const distMin = r.distance ? Math.round(parseInt(r.distance) / 80) : null;
             
             // 카테고리 파싱
             const { badge } = parseCategory(r.category_name || r.category_group_name);
@@ -343,8 +344,7 @@ export default function ListScreen({
                   {/* Square thumbnail */}
                   <div className="w-24 h-24 shrink-0 m-3 rounded-xl overflow-hidden">
                     <SafeImage
-                      src={r.photo_url}
-                      srcs={r.photo_urls}
+                      src={imgSrc}
                       alt={r.place_name}
                       category={r.category_name || r.category_group_name}
                       className="w-full h-full object-cover"
@@ -374,3 +374,4 @@ export default function ListScreen({
   );
 }
 
+// 카테고리별 기본 이미지
