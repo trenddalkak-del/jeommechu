@@ -23,6 +23,7 @@ export interface Restaurant {
   address_name: string;
   road_address_name: string;
   photo_url: string | null;
+  photo_urls?: string[];
   open_now?: boolean; // undefined = no info
   google_types?: string[]; // Google Places types for hashtags
 }
@@ -49,6 +50,7 @@ export default function MainPage() {
   const [ignoreMealHistory, setIgnoreMealHistory] = useState(false);
   const [distanceMin, setDistanceMin] = useState(10);
   const [totalFound, setTotalFound] = useState<number | null>(null);
+  const [yesterdayCategory, setYesterdayCategory] = useState<string | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem("onboarding");
@@ -58,6 +60,33 @@ export default function MainPage() {
       if (data.lng) setLng(data.lng);
       if (data.distanceMin) setDistanceMin(data.distanceMin);
     }
+  }, []);
+
+  // 어제 식사 기록 가져오기
+  useEffect(() => {
+    const fetchYesterdayMeal = async () => {
+      try {
+        const res = await fetch("/api/meals?userId=local-user&limit=1");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.meals && data.meals.length > 0) {
+            const lastMeal = data.meals[0];
+            const lastMealDate = new Date(lastMeal.eatenAt);
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            // 어제 먹은 기록이 있으면 카테고리 저장
+            if (lastMealDate.toDateString() === yesterday.toDateString()) {
+              setYesterdayCategory(lastMeal.category);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch yesterday meal:", err);
+      }
+    };
+    
+    fetchYesterdayMeal();
   }, []);
 
   useEffect(() => {
@@ -177,6 +206,7 @@ export default function MainPage() {
             onIgnoreMealHistory={ignoreMealHistory ? undefined : handleIgnoreMealHistory}
             distanceMin={distanceMin}
             totalFound={totalFound}
+            yesterdayCategory={yesterdayCategory}
           />
         )}
         {phase === "swipe" && (

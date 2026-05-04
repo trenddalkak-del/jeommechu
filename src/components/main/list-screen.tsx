@@ -1,10 +1,10 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
+import SafeImage from "./safe-image";
 import { useEffect, useState } from "react";
 import type { Restaurant, WeatherInfo } from "@/app/main/page";
-import { getCategoryImage } from "@/lib/category-images";
-import { parseCategory, generateHashtags } from "@/lib/utils";
+import { parseCategory, generateHashtags, generateGreeting, calculateWalkingMinutes } from "@/lib/utils";
 
 const weatherEmoji: Record<string, string> = {
   Clear: "☀️", Clouds: "☁️", Rain: "🌧️", Drizzle: "🌦️", Snow: "❄️", Thunderstorm: "⛈️",
@@ -32,6 +32,7 @@ export default function ListScreen({
   onIgnoreMealHistory,
   distanceMin = 10,
   totalFound,
+  yesterdayCategory,
 }: {
   restaurants: Restaurant[];
   weather: WeatherInfo | null;
@@ -41,11 +42,13 @@ export default function ListScreen({
   onIgnoreMealHistory?: () => void;
   distanceMin?: number;
   totalFound?: number | null;
+  yesterdayCategory?: string | null;
 }) {
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
   const [showDistancePicker, setShowDistancePicker] = useState(false);
   const [selectedDistance, setSelectedDistance] = useState(distanceMin);
+  const [greeting, setGreeting] = useState("오늘의 점메추");
 
   // Sync selectedDistance when prop changes
   useEffect(() => {
@@ -60,6 +63,19 @@ export default function ListScreen({
       if (data.distanceMin) setSelectedDistance(data.distanceMin);
     }
   }, []);
+
+  // Generate dynamic greeting
+  useEffect(() => {
+    const now = new Date();
+    const hour = now.getHours();
+    const newGreeting = generateGreeting({
+      hour,
+      weatherMain: weather?.main,
+      temp: weather?.temp,
+      yesterdayCategory,
+    });
+    setGreeting(newGreeting);
+  }, [weather, yesterdayCategory]);
 
   // Show toast when fetchError arrives
   useEffect(() => {
@@ -170,7 +186,7 @@ export default function ListScreen({
           animate={{ opacity: 1, y: 0 }}
           className="text-2xl font-bold text-gray-900"
         >
-          오늘의 점메추
+          {greeting}
         </motion.h1>
         {weather && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="flex items-center gap-2 mt-2">
@@ -263,8 +279,7 @@ export default function ListScreen({
       {!isEmpty && !isError && (
         <div className="px-5 space-y-3">
           {restaurants.map((r, i) => {
-            const imgSrc = r.photo_url || getCategoryImage(r.category_name || r.category_group_name);
-            const distMin = r.distance ? Math.round(parseInt(r.distance) / 80) : null;
+            const distMin = calculateWalkingMinutes(r.distance);
             
             // 카테고리 파싱
             const { badge } = parseCategory(r.category_name || r.category_group_name);
@@ -312,6 +327,7 @@ export default function ListScreen({
                           정보없음
                         </span>
                       )}
+                      
                       <span className="text-xs text-gray-400">
                         {r.distance ? `${r.distance}m` : ""}
                         {distMin !== null ? ` · ${distMin}분` : ""}
@@ -326,9 +342,11 @@ export default function ListScreen({
                   </div>
                   {/* Square thumbnail */}
                   <div className="w-24 h-24 shrink-0 m-3 rounded-xl overflow-hidden">
-                    <img
-                      src={imgSrc}
+                    <SafeImage
+                      src={r.photo_url}
+                      srcs={r.photo_urls}
                       alt={r.place_name}
+                      category={r.category_name || r.category_group_name}
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -355,3 +373,4 @@ export default function ListScreen({
     </motion.div>
   );
 }
+

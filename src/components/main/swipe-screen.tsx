@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
 import type { Restaurant } from "@/app/main/page";
-import { extractSubcategory, parseCategory, generateHashtags } from "@/lib/utils";
+import { extractSubcategory, parseCategory, generateHashtags, calculateWalkingMinutes } from "@/lib/utils";
 import { getUserId } from "@/lib/user";
 import SafeImage from "./safe-image";
 
@@ -177,7 +177,7 @@ function SwipeCard({
   const likeOpacity = useTransform(x, [0, 100], [0, 1]);
   const nopeOpacity = useTransform(x, [-100, 0], [1, 0]);
 
-  const distMin = restaurant.distance ? Math.round(parseInt(restaurant.distance) / 80) : null;
+  const distMin = calculateWalkingMinutes(restaurant.distance);
   
   // 카테고리 파싱
   const { badge } = parseCategory(restaurant.category_name || restaurant.category_group_name);
@@ -205,6 +205,7 @@ function SwipeCard({
         {/* Full cover photo with skeleton + error fallback */}
         <SafeImage
           src={restaurant.photo_url}
+          srcs={restaurant.photo_urls}
           alt={restaurant.place_name}
           category={restaurant.category_name || restaurant.category_group_name}
           className="absolute inset-0 w-full h-full object-cover"

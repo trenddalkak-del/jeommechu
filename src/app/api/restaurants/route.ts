@@ -68,6 +68,7 @@ export async function GET(request: NextRequest) {
         return {
           ...r,
           photo_url: info?.photoUrl || null,
+          photo_urls: info?.photoUrls || [],
           open_now: info?.openNow, // undefined = no info
           google_types: info?.types, // for hashtags
         };

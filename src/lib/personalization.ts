@@ -23,15 +23,15 @@ function matchesKeywords(text: string, keywords: string[]): boolean {
 
 /**
  * 시간대별 카테고리 제외 여부
- * 점심(11~14): 호프/바/주점 제외
+ * 19시 이전: 호프/바/주점 제외
  * 그 외: 제외 없음
  */
 export function shouldExcludeByTimeCategory(
   categoryName: string,
   hour: number
 ): boolean {
-  // 점심 시간대: 호프/바/주점 제외
-  if (hour >= 11 && hour < 14) {
+  // 19시 이전: 호프/바/주점 제외
+  if (hour < 19) {
     return matchesKeywords(categoryName, LUNCH_EXCLUDED_KEYWORDS);
   }
   return false;

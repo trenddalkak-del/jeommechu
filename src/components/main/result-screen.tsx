@@ -5,6 +5,7 @@ import { getUserId } from "@/lib/user";
 import { motion } from "framer-motion";
 import type { Restaurant, WeatherInfo } from "@/app/main/page";
 import { parseCategory, generateHashtags } from "@/lib/utils";
+import { calculateWalkingMinutes } from "@/lib/utils";
 import SafeImage from "./safe-image";
 
 function logEvent(eventType: string, metadata: Record<string, unknown>) {
@@ -36,9 +37,7 @@ export default function ResultScreen({
     }))
   );
 
-  const distanceMin = restaurant.distance
-    ? Math.round(parseInt(restaurant.distance) / 80)
-    : null;
+  const distanceMin = calculateWalkingMinutes(restaurant.distance);
 
   // 카테고리 파싱
   const { badge } = parseCategory(restaurant.category_name || restaurant.category_group_name);
@@ -192,6 +191,7 @@ export default function ResultScreen({
           >
             <SafeImage
               src={restaurant.photo_url}
+              srcs={restaurant.photo_urls}
               alt={restaurant.place_name}
               category={restaurant.category_name || restaurant.category_group_name}
               className="absolute inset-0 w-full h-full object-cover"

@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");
     const days = parseInt(searchParams.get("days") || "7");
+    const limit = parseInt(searchParams.get("limit") || "0");
 
     if (!userId) {
       return NextResponse.json({ error: "userId required" }, { status: 400 });
@@ -60,9 +61,10 @@ export async function GET(request: NextRequest) {
       },
       include: { restaurant: true },
       orderBy: { eatenAt: "desc" },
+      take: limit > 0 ? limit : undefined,
     });
 
-    return NextResponse.json(records);
+    return NextResponse.json({ meals: records });
   } catch (error) {
     console.error("Meal records fetch error:", error);
     return NextResponse.json(
