@@ -36,6 +36,7 @@ interface PlacesSearchResult {
 
 export interface PlaceInfo {
   photoUrl: string | null;    // first/best photo URL (backward compat)
+  photoUrlThumb: string | null; // thumbnail URL (maxWidthPx=400)
   photoUrls: string[];         // all candidate URLs, landscape-first
   openNow?: boolean;           // undefined = no info available
   types?: string[];            // Google Places types for hashtags
@@ -93,14 +94,14 @@ async function getPlaceInfo(
 
     if (!searchRes.ok) {
       console.log(`[GooglePlaces] ${name}: API error ${searchRes.status}`);
-      return { photoUrl: null, photoUrls: [] };
+      return { photoUrl: null, photoUrlThumb: null, photoUrls: [] };
     }
 
     const searchData: PlacesSearchResult = await searchRes.json();
     const allPlaces = searchData.places;
     if (!allPlaces || allPlaces.length === 0) {
       console.log(`[GooglePlaces] ${name}: no search results for query "${textQuery}"`);
-      return { photoUrl: null, photoUrls: [] };
+      return { photoUrl: null, photoUrlThumb: null, photoUrls: [] };
     }
 
     // Pick the best food-related place from results (since we removed includedType filter)
@@ -116,7 +117,7 @@ async function getPlaceInfo(
     // If the best match isn't food-related at all (e.g., a street or area), skip it
     if (!isFood && !foodPlace) {
       console.log(`[GooglePlaces] ${name}: matched non-food place "${matchedName}" -> skipping`);
-      return { photoUrl: null, photoUrls: [], openNow: undefined, types: place.types };
+      return { photoUrl: null, photoUrlThumb: null, photoUrls: [], openNow: undefined, types: place.types };
     }
 
     // Extract open status (undefined if field not present)
@@ -136,7 +137,7 @@ async function getPlaceInfo(
 
     if (!photos || photos.length === 0) {
       console.log(`[GooglePlaces] ${name}: no photos`);
-      return { photoUrl: null, photoUrls: [], openNow, types };
+      return { photoUrl: null, photoUrlThumb: null, photoUrls: [], openNow, types };
     }
 
     // Sort: landscape (width >= height) first, then portrait
@@ -149,13 +150,14 @@ async function getPlaceInfo(
       (p) => `/api/photo/${p.name}?maxWidthPx=800`
     );
     const photoUrl = photoUrls[0] ?? null;
+    const photoUrlThumb = sorted[0] ? `/api/photo/${sorted[0].name}?maxWidthPx=400` : null;
 
     console.log(`[GooglePlaces] ${name}: photo_url ${photoUrl ? "OK" : "null"}, ${photoUrls.length} URLs (${landscape.length} landscape)`);
 
-    return { photoUrl, photoUrls, openNow, types };
+    return { photoUrl, photoUrlThumb, photoUrls, openNow, types };
   } catch (err) {
     console.log(`[GooglePlaces] ${name}: exception`, err);
-    return { photoUrl: null, photoUrls: [] };
+    return { photoUrl: null, photoUrlThumb: null, photoUrls: [] };
   }
 }
 

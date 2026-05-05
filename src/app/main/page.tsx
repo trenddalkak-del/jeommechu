@@ -23,6 +23,7 @@ export interface Restaurant {
   address_name: string;
   road_address_name: string;
   photo_url: string | null;
+  photo_url_thumb?: string | null;
   photo_urls?: string[];
   open_now?: boolean; // undefined = no info
   google_types?: string[]; // Google Places types for hashtags

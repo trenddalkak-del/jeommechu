@@ -260,7 +260,7 @@ export default function ListScreen({
       {!isEmpty && !isError && (
         <div className="px-5 space-y-3">
           {restaurants.map((r, i) => {
-            const imgSrc = r.photo_url || null;
+            const imgSrc = r.photo_url_thumb || r.photo_url || null;
             const distMin = r.distance ? Math.round(parseInt(r.distance) / 80) : null;
             // 카테고리 파싱
             const { badge } = parseCategory(r.category_name || r.category_group_name);
