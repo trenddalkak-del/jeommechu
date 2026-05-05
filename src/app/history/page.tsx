@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { getUserId } from "@/lib/user";
 import BottomNav from "@/components/BottomNav";
 import SafeImage from "@/components/main/safe-image";
+import ProfileHeader from "@/components/history/profile-header";
+import SettingsSheet from "@/components/history/settings-sheet";
 
 interface MealRecord {
   id: string;
@@ -41,6 +43,7 @@ export default function HistoryPage() {
   const [selectedDate, setSelectedDate] = useState<string>(ymd(new Date()));
   const [loading, setLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     const currentMonth = monthKey(month);
@@ -86,10 +89,7 @@ export default function HistoryPage() {
 
   return (
     <main className="min-h-screen bg-gray-50 pb-24">
-      <div className="px-5 pt-12 pb-4">
-        <h1 className="text-2xl font-bold text-gray-900">식사 기록</h1>
-        <p className="text-sm text-gray-400 mt-1">월별 캘린더로 식사를 확인해보세요</p>
-      </div>
+      <ProfileHeader onSettingsOpen={() => setSettingsOpen(true)} />
 
       <div className="px-4">
         <div className="bg-white rounded-2xl p-4 shadow-sm">
@@ -203,6 +203,8 @@ export default function HistoryPage() {
       )}
 
       <BottomNav />
+
+      <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </main>
   );
 }

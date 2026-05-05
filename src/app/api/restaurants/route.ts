@@ -31,7 +31,9 @@ export async function GET(request: NextRequest) {
       searchParams.get("ignoreMealHistory") === "true";
 
     // Convert walking minutes to meters (5min=400m, 10min=800m, 15min=1200m, 20min=1600m)
-    const radius = distanceMin * 80;
+    // If explicit radius (meters) is provided (from settings), it takes precedence
+    const explicitRadius = searchParams.get("radius");
+    const radius = explicitRadius ? parseInt(explicitRadius) : distanceMin * 80;
 
     // Current server time (Korea Standard Time = UTC+9)
     const nowHour = new Date(

@@ -5,96 +5,80 @@ generator client {
 
 datasource db {
   provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
-model User {
-  id           String   @id
-  kakaoId      String?  @unique @map("kakao_id")
-  name         String?
-  email        String?
-  image        String?
-  locationLat  Float?   @map("location_lat")
-  locationLng  Float?   @map("location_lng")
-  distancePref Int      @default(10) @map("distance_pref")
-  allergies    String   @default("[]")
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  mealRecords MealRecord[]
-  swipeLogs   SwipeLog[]
-  favorites   Favorite[]
-  eventLogs   EventLog[]
-
-  @@map("users")
+model event_logs {
+  id         String   @id
+  user_id    String
+  event_type String
+  metadata   String   @default("{}")
+  created_at DateTime @default(now())
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
-model Restaurant {
-  id           String   @id @default(cuid())
-  kakaoPlaceId String   @unique @map("kakao_place_id")
-  name         String
-  category     String
-  lat          Float
-  lng          Float
-  rating       Float?
-  cachedAt     DateTime @default(now()) @map("cached_at")
+model favorites {
+  id            String      @id
+  user_id       String
+  restaurant_id String
+  created_at    DateTime    @default(now())
+  restaurants   restaurants @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
+  users         users       @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  mealRecords MealRecord[]
-  swipeLogs   SwipeLog[]
-  favorites   Favorite[]
-
-  @@map("restaurants")
+  @@unique([user_id, restaurant_id])
 }
 
-model MealRecord {
-  id           String   @id @default(cuid())
-  userId       String   @map("user_id")
-  restaurantId String?  @map("restaurant_id")
-  restaurantName String @map("restaurant_name")
-  category     String
-  photoUrl     String?  @map("photo_url")
-  eatenAt      DateTime @default(now()) @map("eaten_at")
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  restaurant Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: SetNull)
-
-  @@map("meal_records")
+model meal_records {
+  id              String       @id
+  user_id         String
+  restaurant_id   String?
+  restaurant_name String
+  category        String
+  photo_url       String?
+  eaten_at        DateTime     @default(now())
+  created_at      DateTime     @default(now())
+  restaurants     restaurants? @relation(fields: [restaurant_id], references: [id])
+  users           users        @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
-model SwipeLog {
-  id           String   @id @default(cuid())
-  userId       String   @map("user_id")
-  restaurantId String   @map("restaurant_id")
-  direction    String
-  category     String
-  swipedAt     DateTime @default(now()) @map("swiped_at")
-
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-
-  @@map("swipe_logs")
+model restaurants {
+  id             String         @id
+  kakao_place_id String         @unique
+  name           String
+  category       String
+  lat            Float
+  lng            Float
+  rating         Float?
+  cached_at      DateTime       @default(now())
+  favorites      favorites[]
+  meal_records   meal_records[]
+  swipe_logs     swipe_logs[]
 }
 
-model Favorite {
-  id           String   @id @default(cuid())
-  userId       String   @map("user_id")
-  restaurantId String   @map("restaurant_id")
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, restaurantId])
-  @@map("favorites")
+model swipe_logs {
+  id            String      @id
+  user_id       String
+  restaurant_id String
+  direction     String
+  category      String
+  swiped_at     DateTime    @default(now())
+  restaurants   restaurants @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
+  users         users       @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
-model EventLog {
-  id        String   @id @default(cuid())
-  userId    String   @map("user_id")
-  eventType String   @map("event_type")
-  metadata  String   @default("{}")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("event_logs")
+model users {
+  id            String         @id
+  kakao_id      String?        @unique
+  location_lat  Float?
+  location_lng  Float?
+  distance_pref Int            @default(10)
+  allergies     String         @default("[]")
+  created_at    DateTime       @default(now())
+  email         String?
+  image         String?
+  name          String?
+  event_logs    event_logs[]
+  favorites     favorites[]
+  meal_records  meal_records[]
+  swipe_logs    swipe_logs[]
 }

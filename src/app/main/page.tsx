@@ -123,8 +123,17 @@ export default function MainPage() {
           }
         } catch { /* ignore */ }
 
+        // searchRadius (meters) set from settings sheet takes precedence
+        let radiusParam = "";
+        try {
+          const savedRadius = localStorage.getItem("searchRadius");
+          if (savedRadius) {
+            radiusParam = `&radius=${savedRadius}`;
+          }
+        } catch { /* ignore */ }
+
         const res = await fetch(
-          `/api/restaurants?lat=${currentLat}&lng=${currentLng}&userId=local-user&ignoreMealHistory=${ignoreMealHistory}&distanceMin=${currentDistanceMin}`
+          `/api/restaurants?lat=${currentLat}&lng=${currentLng}&userId=local-user&ignoreMealHistory=${ignoreMealHistory}&distanceMin=${currentDistanceMin}${radiusParam}`
         );
 
         if (!res.ok) {

@@ -145,6 +145,16 @@ export function getTimeGreeting(hour: number = new Date().getHours()): string {
 }
 
 /**
+ * 시간대 타입 반환 (날씨 접미사 표시 여부 결정용)
+ */
+function getTimeType(hour: number): "morning" | "lunch" | "dinner" | "latenight" {
+  if (hour >= 6 && hour < 11) return "morning";
+  if (hour >= 11 && hour < 17) return "lunch";
+  if (hour >= 17 && hour < 21) return "dinner";
+  return "latenight";
+}
+
+/**
  * 날씨에 따른 인사말 접미사 반환
  */
 export function getWeatherSuffix(
@@ -213,6 +223,12 @@ export function generateGreeting({
   yesterdayCategory?: string | null;
 }): string {
   const baseGreeting = getTimeGreeting(hour);
+  const timeType = getTimeType(hour);
+
+  // 저녁(17-21시) 또는 야식(21-6시) 시간대는 기본 인사말만 표시
+  if (timeType === "dinner" || timeType === "latenight") {
+    return baseGreeting;
+  }
 
   // 어제 기록이 있으면 50% 확률로 표시
   if (yesterdayCategory && Math.random() < 0.5) {
@@ -227,9 +243,13 @@ export function generateGreeting({
   return baseGreeting;
 }
 
-export function calculateWalkingMinutes(distanceMeters: number | string | undefined | null): number | null {
-  if (!distanceMeters) return null;
-  const meters = typeof distanceMeters === "string" ? parseInt(distanceMeters, 10) : distanceMeters;
+/**
+ * 거리(미터)를 도보 시간(분)으로 변환
+ * 평균 보행 속도: 80m/분
+ */
+export function calculateWalkingMinutes(distance: string | undefined): number | null {
+  if (!distance) return null;
+  const meters = parseInt(distance, 10);
   if (isNaN(meters)) return null;
-  return Math.max(1, Math.ceil(meters / 67));
+  return Math.round(meters / 80);
 }
