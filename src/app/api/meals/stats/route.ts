@@ -24,8 +24,8 @@ export async function GET(request: NextRequest) {
     const start = new Date(year, monthIndex, 1);
     const end = new Date(year, monthIndex + 1, 1);
 
-    const records = await prisma.mealRecord.findMany({
-      where: { userId, eatenAt: { gte: start, lt: end } },
+    const records = await prisma.meal_records.findMany({
+      where: { user_id: userId, eaten_at: { gte: start, lt: end } },
       select: { category: true },
     });
 

@@ -6,8 +6,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { userId, restaurantId, direction, category } = body;
 
-    const log = await prisma.swipeLog.create({
-      data: { userId, restaurantId, direction, category },
+    const log = await prisma.swipe_logs.create({
+      data: { id: crypto.randomUUID(), user_id: userId, restaurant_id: restaurantId, direction, category },
     });
 
     return NextResponse.json(log);

@@ -6,8 +6,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { userId, eventType, metadata } = body;
 
-    const log = await prisma.eventLog.create({
-      data: { userId, eventType, metadata: metadata || {} },
+    const log = await prisma.event_logs.create({
+      data: { id: crypto.randomUUID(), user_id: userId, event_type: eventType, metadata: metadata ? JSON.stringify(metadata) : "{}" },
     });
 
     return NextResponse.json(log);

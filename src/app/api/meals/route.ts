@@ -10,21 +10,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "userId, restaurant, category required" }, { status: 400 });
     }
 
-    await prisma.user.upsert({
+    await prisma.users.upsert({
       where: { id: userId },
       create: { id: userId },
       update: {},
     });
 
-    // Upsert restaurant so FK is valid
-    const dbRestaurant = await prisma.restaurant.upsert({
-      where: { kakaoPlaceId: restaurant.id },
+    const dbRestaurant = await prisma.restaurants.upsert({
+      where: { kakao_place_id: restaurant.id },
       update: {
         name: restaurant.place_name,
         category: restaurant.category_group_name || restaurant.category_name || "",
       },
       create: {
-        kakaoPlaceId: restaurant.id,
+        id: crypto.randomUUID(),
+        kakao_place_id: restaurant.id,
         name: restaurant.place_name,
         category: restaurant.category_group_name || restaurant.category_name || "",
         lat: parseFloat(restaurant.y || "0"),
@@ -32,16 +32,17 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const record = await prisma.mealRecord.create({
+    const record = await prisma.meal_records.create({
       data: {
-        userId,
-        restaurantId: dbRestaurant.id,
-        restaurantName: restaurant.place_name || dbRestaurant.name,
+        id: crypto.randomUUID(),
+        user_id: userId,
+        restaurant_id: dbRestaurant.id,
+        restaurant_name: restaurant.place_name || dbRestaurant.name,
         category,
-        photoUrl: restaurant.photo_url || restaurant.photo_urls?.[0] || null,
-        eatenAt: eatenAt ? new Date(eatenAt) : new Date(),
+        photo_url: restaurant.photo_url || restaurant.photo_urls?.[0] || null,
+        eaten_at: eatenAt ? new Date(eatenAt) : new Date(),
       },
-      include: { restaurant: true },
+      include: { restaurants: true },
     });
 
     return NextResponse.json(record);
@@ -83,13 +84,13 @@ export async function GET(request: NextRequest) {
       eatenAtFilter = { gte: since };
     }
 
-    const records = await prisma.mealRecord.findMany({
+    const records = await prisma.meal_records.findMany({
       where: {
-        userId,
-        eatenAt: eatenAtFilter,
+        user_id: userId,
+        eaten_at: eatenAtFilter,
       },
-      include: { restaurant: true },
-      orderBy: { eatenAt: "desc" },
+      include: { restaurants: true },
+      orderBy: { eaten_at: "desc" },
       take: limit > 0 ? limit : undefined,
     });
 

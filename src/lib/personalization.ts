@@ -71,12 +71,12 @@ export async function buildPersonalizationContext(
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
   const [mealRecords, swipeLogs] = await Promise.all([
-    prisma.mealRecord.findMany({
-      where: { userId, eatenAt: { gte: oneWeekAgo } },
+    prisma.meal_records.findMany({
+      where: { user_id: userId, eaten_at: { gte: oneWeekAgo } },
       select: { category: true },
     }),
-    prisma.swipeLog.findMany({
-      where: { userId, direction: "right" },
+    prisma.swipe_logs.findMany({
+      where: { user_id: userId, direction: "right" },
       select: { category: true },
     }),
   ]);

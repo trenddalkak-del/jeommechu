@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "userId required" }, { status: 400 });
     }
 
-    await prisma.user.upsert({
+    await prisma.users.upsert({
       where: { id: userId },
       create: { id: userId },
       update: {},

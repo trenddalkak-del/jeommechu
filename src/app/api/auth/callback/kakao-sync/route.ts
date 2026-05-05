@@ -9,11 +9,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "kakaoId required" }, { status: 400 });
     }
 
-    const user = await prisma.user.upsert({
-      where: { kakaoId },
+    const user = await prisma.users.upsert({
+      where: { kakao_id: kakaoId },
       create: {
         id: crypto.randomUUID(),
-        kakaoId,
+        kakao_id: kakaoId,
         name: name || null,
         image: image || null,
         email: email || null,
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ userId: user.id, kakaoId: user.kakaoId });
+    return NextResponse.json({ userId: user.id, kakaoId: user.kakao_id });
   } catch (error) {
     console.error("Kakao sync error:", error);
     return NextResponse.json(

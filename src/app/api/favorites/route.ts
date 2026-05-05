@@ -12,22 +12,22 @@ export async function GET(request: NextRequest) {
 
   try {
     if (kakaoPlaceId) {
-      const restaurant = await prisma.restaurant.findUnique({
-        where: { kakaoPlaceId },
+      const restaurant = await prisma.restaurants.findUnique({
+        where: { kakao_place_id: kakaoPlaceId },
       });
       if (!restaurant) {
         return NextResponse.json({ favorited: false });
       }
-      const fav = await prisma.favorite.findUnique({
-        where: { userId_restaurantId: { userId, restaurantId: restaurant.id } },
+      const fav = await prisma.favorites.findUnique({
+        where: { user_id_restaurant_id: { user_id: userId, restaurant_id: restaurant.id } },
       });
       return NextResponse.json({ favorited: !!fav });
     }
 
-    const favorites = await prisma.favorite.findMany({
-      where: { userId },
-      include: { restaurant: true },
-      orderBy: { createdAt: "desc" },
+    const favorites = await prisma.favorites.findMany({
+      where: { user_id: userId },
+      include: { restaurants: true },
+      orderBy: { created_at: "desc" },
     });
     return NextResponse.json(favorites);
   } catch (error) {
@@ -45,21 +45,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "userId and restaurant required" }, { status: 400 });
     }
 
-    // userId가 users 테이블에 없으면 FK 위반으로 실패 → 먼저 upsert로 보장
-    await prisma.user.upsert({
+    await prisma.users.upsert({
       where: { id: userId },
       create: { id: userId },
       update: {},
     });
 
-    const dbRestaurant = await prisma.restaurant.upsert({
-      where: { kakaoPlaceId: restaurant.id },
+    const dbRestaurant = await prisma.restaurants.upsert({
+      where: { kakao_place_id: restaurant.id },
       update: {
         name: restaurant.place_name,
         category: restaurant.category_group_name || restaurant.category_name || "",
       },
       create: {
-        kakaoPlaceId: restaurant.id,
+        id: crypto.randomUUID(),
+        kakao_place_id: restaurant.id,
         name: restaurant.place_name,
         category: restaurant.category_group_name || restaurant.category_name || "",
         lat: parseFloat(restaurant.y || "0"),
@@ -67,13 +67,13 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const favorite = await prisma.favorite.upsert({
-      where: { userId_restaurantId: { userId, restaurantId: dbRestaurant.id } },
+    const favorite = await prisma.favorites.upsert({
+      where: { user_id_restaurant_id: { user_id: userId, restaurant_id: dbRestaurant.id } },
       update: {},
-      create: { userId, restaurantId: dbRestaurant.id },
+      create: { id: crypto.randomUUID(), user_id: userId, restaurant_id: dbRestaurant.id },
     });
 
-    return NextResponse.json({ ...favorite, restaurant: dbRestaurant });
+    return NextResponse.json({ ...favorite, restaurants: dbRestaurant });
   } catch (error) {
     console.error("Favorite create error:", error);
     return NextResponse.json({ error: "Failed to create favorite" }, { status: 500 });
@@ -93,16 +93,16 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const restaurant = await prisma.restaurant.findUnique({
-      where: { kakaoPlaceId },
+    const restaurant = await prisma.restaurants.findUnique({
+      where: { kakao_place_id: kakaoPlaceId },
     });
 
     if (!restaurant) {
       return NextResponse.json({ success: true });
     }
 
-    await prisma.favorite.deleteMany({
-      where: { userId, restaurantId: restaurant.id },
+    await prisma.favorites.deleteMany({
+      where: { user_id: userId, restaurant_id: restaurant.id },
     });
 
     return NextResponse.json({ success: true });
