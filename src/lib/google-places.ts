@@ -80,7 +80,7 @@ async function getPlaceInfo(
       };
     }
 
-    const searchRes = await fetch(`${PLACES_BASE}/places:searchText?q=${encodeURIComponent(name)}`, {
+    const searchRes = await fetch(`${PLACES_BASE}/places:searchText`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -88,7 +88,7 @@ async function getPlaceInfo(
         "X-Goog-FieldMask": "places.id,places.displayName,places.photos,places.currentOpeningHours,places.types",
       },
       body: JSON.stringify(requestBody),
-      next: { revalidate: 86400 },
+      cache: "no-store",
     });
 
     if (!searchRes.ok) {
