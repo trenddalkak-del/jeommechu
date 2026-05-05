@@ -8,7 +8,7 @@ import SwipeScreen from "@/components/main/swipe-screen";
 import DecisionScreen from "@/components/main/decision-screen";
 import ResultScreen from "@/components/main/result-screen";
 import BottomNav from "@/components/BottomNav";
-import { extractSubcategory } from "@/lib/utils";
+import { getUserId } from "@/lib/user";
 
 export interface Restaurant {
   id: string;
@@ -67,7 +67,7 @@ export default function MainPage() {
   useEffect(() => {
     const fetchYesterdayMeal = async () => {
       try {
-        const res = await fetch("/api/meals?userId=local-user&limit=1");
+        const res = await fetch(`/api/meals?userId=${getUserId()}&limit=1`);
         if (res.ok) {
           const data = await res.json();
           if (data.meals && data.meals.length > 0) {
@@ -178,15 +178,6 @@ export default function MainPage() {
 
   const handleChoose = (restaurant: Restaurant) => {
     setChosen(restaurant);
-    fetch("/api/meals", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId: 'local-user',
-        restaurant,
-        category: extractSubcategory(restaurant.category_name || restaurant.category_group_name),
-      }),
-    }).catch(console.error);
     setPhase("result");
   };
 
