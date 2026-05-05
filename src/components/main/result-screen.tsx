@@ -193,7 +193,7 @@ export default function ResultScreen({
               src={restaurant.photo_url}
               srcs={restaurant.photo_urls}
               alt={restaurant.place_name}
-              category={restaurant.category_name || restaurant.category_group_name}
+              
               className="absolute inset-0 w-full h-full object-cover"
             />
             {/* Gradient overlay — bottom 50% */}

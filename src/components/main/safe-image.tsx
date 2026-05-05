@@ -8,7 +8,6 @@ interface SafeImageProps {
   /** Multiple candidate URLs to try in order (landscape-first). */
   srcs?: string[];
   alt: string;
-  category?: string;
   className?: string;
   loading?: "eager" | "lazy";
 }
@@ -16,7 +15,7 @@ interface SafeImageProps {
 /**
  * Image component with skeleton loading and multi-URL fallback.
  * - Tries each URL in srcs (or src) in order.
- * - Falls back to a solid background with text when ALL URLs fail or none are provided.
+ * - Renders nothing when ALL URLs fail or none are provided.
  */
 export default function SafeImage({
   src,
@@ -37,19 +36,9 @@ export default function SafeImage({
     urls.length > 0 ? "loading" : "error"
   );
 
-  const renderFallback = () => (
-    <div
-      className={`${className} bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center`}
-    >
-      <span className="text-gray-400 font-bold text-xl px-4 text-center break-words">
-        {alt || "No Image"}
-      </span>
-    </div>
-  );
-
-  // No URLs at all → show fallback immediately (no skeleton)
+  // No URLs at all → render nothing
   if (urls.length === 0) {
-    return renderFallback();
+    return null;
   }
 
   const handleError = () => {
@@ -58,7 +47,7 @@ export default function SafeImage({
       setUrlIndex((prev) => prev + 1);
       setImageStatus("loading");
     } else {
-      // All URLs failed → show fallback
+      // All URLs failed → render nothing
       setImageStatus("error");
     }
   };
@@ -66,7 +55,7 @@ export default function SafeImage({
   const currentUrl = urls[urlIndex];
 
   if (imageStatus === "error") {
-    return renderFallback();
+    return null;
   }
 
   return (

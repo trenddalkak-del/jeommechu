@@ -73,7 +73,8 @@ export async function GET(request: NextRequest) {
           google_types: info?.types, // for hashtags
         };
       })
-      .filter((r) => r.open_now !== false); // exclude confirmed closed
+      .filter((r) => r.open_now !== false) // exclude confirmed closed
+      .filter((r) => !!r.photo_url && r.photo_url.length > 0); // exclude no photo
 
     // Total after all filters (before capping at 10) — used for "not enough stores" UI
     const totalFound = withPlaceInfo.length;

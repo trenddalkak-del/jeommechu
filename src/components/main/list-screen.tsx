@@ -1,28 +1,23 @@
 "use client";
-
 import { motion, AnimatePresence } from "framer-motion";
 import SafeImage from "./safe-image";
 import { useEffect, useState } from "react";
 import type { Restaurant, WeatherInfo } from "@/app/main/page";
 import { parseCategory, generateHashtags, generateGreeting } from "@/lib/utils";
-
 const weatherEmoji: Record<string, string> = {
   Clear: "☀️", Clouds: "☁️", Rain: "🌧️", Drizzle: "🌦️", Snow: "❄️", Thunderstorm: "⛈️",
 };
-
 const DISTANCE_OPTIONS = [
   { label: "5분", value: 5, radius: 400 },
   { label: "10분", value: 10, radius: 800 },
   { label: "15분", value: 15, radius: 1200 },
   { label: "20분", value: 20, radius: 1600 },
 ];
-
 function getNextDistance(current: number): number | null {
   const idx = DISTANCE_OPTIONS.findIndex((o) => o.value === current);
   if (idx === -1 || idx >= DISTANCE_OPTIONS.length - 1) return null;
   return DISTANCE_OPTIONS[idx + 1].value;
 }
-
 export default function ListScreen({
   restaurants,
   weather,
@@ -49,12 +44,10 @@ export default function ListScreen({
   const [showDistancePicker, setShowDistancePicker] = useState(false);
   const [selectedDistance, setSelectedDistance] = useState(distanceMin);
   const [greeting, setGreeting] = useState("오늘의 점메추");
-
   // Sync selectedDistance when prop changes
   useEffect(() => {
     setSelectedDistance(distanceMin);
   }, [distanceMin]);
-
   // Read saved distance preference on mount
   useEffect(() => {
     const stored = localStorage.getItem("onboarding");
@@ -63,7 +56,6 @@ export default function ListScreen({
       if (data.distanceMin) setSelectedDistance(data.distanceMin);
     }
   }, []);
-
   // Generate dynamic greeting
   useEffect(() => {
     const now = new Date();
@@ -76,7 +68,6 @@ export default function ListScreen({
     });
     setGreeting(newGreeting);
   }, [weather, yesterdayCategory]);
-
   // Show toast when fetchError arrives
   useEffect(() => {
     if (fetchError) {
@@ -86,7 +77,6 @@ export default function ListScreen({
       return () => clearTimeout(timer);
     }
   }, [fetchError]);
-
   const handleDistanceChange = (value: number) => {
     setSelectedDistance(value);
     const stored = localStorage.getItem("onboarding");
@@ -95,10 +85,8 @@ export default function ListScreen({
     setShowDistancePicker(false);
     onRetry?.();
   };
-
   const isEmpty = restaurants.length === 0 && !fetchError;
   const isError = !!fetchError;
-
   // Insufficient stores warning: shown when < 10 results and there's a next distance option
   const nextDistance = getNextDistance(selectedDistance);
   const showInsufficientWarning =
@@ -108,10 +96,8 @@ export default function ListScreen({
     totalFound !== undefined &&
     totalFound < 10 &&
     nextDistance !== null;
-
   const radiusLabel = DISTANCE_OPTIONS.find((o) => o.value === selectedDistance)?.label || `${selectedDistance}분`;
   const radiusM = (selectedDistance || 10) * 80;
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -135,7 +121,6 @@ export default function ListScreen({
           </motion.div>
         )}
       </AnimatePresence>
-
       {/* Distance picker modal */}
       <AnimatePresence>
         {showDistancePicker && (
@@ -178,7 +163,6 @@ export default function ListScreen({
           </motion.div>
         )}
       </AnimatePresence>
-
       {/* Header */}
       <div className="px-5 pt-12 pb-4">
         <motion.h1
@@ -214,7 +198,6 @@ export default function ListScreen({
           )}
         </div>
       </div>
-
       {/* Insufficient stores warning */}
       {showInsufficientWarning && (
         <motion.div
@@ -234,7 +217,6 @@ export default function ListScreen({
           </button>
         </motion.div>
       )}
-
       {/* Empty / Error state */}
       {(isEmpty || isError) && (
         <motion.div
@@ -274,21 +256,18 @@ export default function ListScreen({
           </div>
         </motion.div>
       )}
-
       {/* Restaurant list */}
       {!isEmpty && !isError && (
         <div className="px-5 space-y-3">
           {restaurants.map((r, i) => {
-            const imgSrc = r.photo_url;
+            const imgSrc = r.photo_url || null;
             const distMin = r.distance ? Math.round(parseInt(r.distance) / 80) : null;
-            
             // 카테고리 파싱
             const { badge } = parseCategory(r.category_name || r.category_group_name);
             const hashtags = generateHashtags(
               r.category_name || r.category_group_name,
               r.google_types
             );
-            
             return (
               <motion.div
                 key={r.id}
@@ -308,7 +287,6 @@ export default function ListScreen({
                       <span className="text-xs bg-[#FF6B35] text-white px-2 py-0.5 rounded-full font-medium">
                         {badge}
                       </span>
-                      
                       {/* 해시태그 */}
                       {hashtags.map((tag, idx) => (
                         <span key={idx} className="text-xs text-gray-500">
@@ -328,13 +306,11 @@ export default function ListScreen({
                           정보없음
                         </span>
                       )}
-                      
                       <span className="text-xs text-gray-400">
                         {r.distance ? `${r.distance}m` : ""}
                         {distMin !== null ? ` · ${distMin}분` : ""}
                       </span>
                     </div>
-                    
                     {r.road_address_name && (
                       <p className="text-gray-400 text-xs mt-1.5 truncate">
                         {r.road_address_name}
@@ -346,7 +322,6 @@ export default function ListScreen({
                     <SafeImage
                       src={imgSrc}
                       alt={r.place_name}
-                      category={r.category_name || r.category_group_name}
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -356,7 +331,6 @@ export default function ListScreen({
           })}
         </div>
       )}
-
       {/* Fixed bottom button */}
       {restaurants.length > 0 && (
         <div className="fixed bottom-16 left-0 right-0 p-5 bg-gradient-to-t from-white via-white to-transparent pt-16 z-40">
@@ -373,5 +347,3 @@ export default function ListScreen({
     </motion.div>
   );
 }
-
-// 카테고리별 기본 이미지
