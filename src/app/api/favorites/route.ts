@@ -29,7 +29,19 @@ export async function GET(request: NextRequest) {
       include: { restaurants: true },
       orderBy: { created_at: "desc" },
     });
-    return NextResponse.json(favorites);
+    const transformed = favorites.map((f) => ({
+      id: f.id,
+      createdAt: f.created_at,
+      restaurant: {
+        id: f.restaurants.id,
+        kakaoPlaceId: f.restaurants.kakao_place_id,
+        name: f.restaurants.name,
+        category: f.restaurants.category,
+        lat: f.restaurants.lat,
+        lng: f.restaurants.lng,
+      },
+    }));
+    return NextResponse.json(transformed);
   } catch (error) {
     console.error("Favorites fetch error:", error);
     return NextResponse.json({ error: "Failed to fetch favorites" }, { status: 500 });
