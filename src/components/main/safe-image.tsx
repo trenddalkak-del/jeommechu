@@ -10,11 +10,14 @@ interface SafeImageProps {
   alt: string;
   className?: string;
   loading?: "eager" | "lazy";
+  /** Background color shown while the image loads. Defaults to #E5E7EB (gray). */
+  placeholderColor?: string;
 }
 
 /**
- * Image component with skeleton loading and multi-URL fallback.
+ * Image component with color placeholder loading and multi-URL fallback.
  * - Tries each URL in srcs (or src) in order.
+ * - Shows a category-colored placeholder while loading (fades out on load).
  * - Renders nothing when ALL URLs fail or none are provided.
  */
 export default function SafeImage({
@@ -23,6 +26,7 @@ export default function SafeImage({
   alt,
   className = "",
   loading = "lazy",
+  placeholderColor = "#E5E7EB",
 }: SafeImageProps) {
   // Resolve the list of URLs to try
   const urls = useMemo<string[]>(() => {
@@ -60,15 +64,21 @@ export default function SafeImage({
 
   return (
     <>
-      {imageStatus === "loading" && (
-        <div className={`${className} bg-gray-200 animate-pulse`} />
-      )}
+      {/* Category-colored placeholder — fades out after image loads */}
+      <div
+        className={`${className} transition-opacity duration-500 ${
+          imageStatus === "loaded" ? "opacity-0 pointer-events-none" : "opacity-100"
+        }`}
+        style={{ backgroundColor: placeholderColor }}
+      />
+      {/* Image — invisible until loaded, then fades in */}
       <img
         key={currentUrl}
         src={currentUrl}
         alt={alt}
-        className={`${className} ${imageStatus === "loading" ? "opacity-0" : "opacity-100"}`}
-        style={imageStatus === "loading" ? { position: "absolute", width: "1px", height: "1px", padding: 0, margin: "-1px", overflow: "hidden", clip: "rect(0, 0, 0, 0)", whiteSpace: "nowrap", border: 0 } : {}}
+        className={`${className} transition-opacity duration-500 ${
+          imageStatus === "loaded" ? "opacity-100" : "opacity-0"
+        }`}
         loading={loading}
         onLoad={() => setImageStatus("loaded")}
         onError={handleError}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
 import type { Restaurant } from "@/app/main/page";
 import { extractSubcategory, parseCategory, generateHashtags, calculateWalkingMinutes } from "@/lib/utils";
@@ -8,6 +8,26 @@ import { getUserId } from "@/lib/user";
 import SafeImage from "./safe-image";
 
 const SWIPE_THRESHOLD = 100;
+
+/** Category → placeholder background color */
+const CATEGORY_COLORS: Record<string, string> = {
+  한식: "#F59E0B",
+  양식: "#1E40AF",
+  중식: "#DC2626",
+  일식: "#4338CA",
+  치킨: "#EAB308",
+  분식: "#EC4899",
+  카페: "#6F4E37",
+  베이커리: "#D97706",
+  해산물: "#0EA5E9",
+};
+
+function getCategoryColor(badge: string): string {
+  for (const [key, color] of Object.entries(CATEGORY_COLORS)) {
+    if (badge.includes(key)) return color;
+  }
+  return "#9CA3AF";
+}
 
 export default function SwipeScreen({
   restaurants,
@@ -21,6 +41,27 @@ export default function SwipeScreen({
   const [exitX, setExitX] = useState(0);
   const [showHint, setShowHint] = useState(true);
   const cardStartTime = useRef(Date.now());
+
+  // Preload first 5 photos when restaurants list is ready
+  useEffect(() => {
+    restaurants.slice(0, 5).forEach((r) => {
+      if (r.photo_url) {
+        const img = new Image();
+        img.src = r.photo_url;
+      }
+    });
+  }, [restaurants]);
+
+  // Preload next 2 photos whenever the current card changes
+  useEffect(() => {
+    for (let i = 1; i <= 2; i++) {
+      const next = restaurants[currentIndex + i];
+      if (next?.photo_url) {
+        const img = new Image();
+        img.src = next.photo_url;
+      }
+    }
+  }, [currentIndex, restaurants]);
 
   const logCardDuration = useCallback((restaurant: Restaurant) => {
     const duration = Date.now() - cardStartTime.current;
@@ -186,6 +227,8 @@ function SwipeCard({
     restaurant.google_types
   );
 
+  const placeholderColor = getCategoryColor(badge);
+
   return (
     <motion.div
       style={{ x, rotate }}
@@ -202,12 +245,12 @@ function SwipeCard({
       className="absolute inset-0 cursor-grab active:cursor-grabbing"
     >
       <div className="relative h-full w-full rounded-2xl overflow-hidden shadow-xl">
-        {/* Full cover photo with skeleton + error fallback */}
+        {/* Full cover photo with category-color placeholder + fade-in */}
         <SafeImage
           src={restaurant.photo_url}
           srcs={restaurant.photo_urls}
           alt={restaurant.place_name}
-          
+          placeholderColor={placeholderColor}
           className="absolute inset-0 w-full h-full object-cover"
           loading="eager"
         />
