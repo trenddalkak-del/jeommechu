@@ -10,8 +10,12 @@ function createPrismaClient() {
   if (typeof window !== "undefined") {
     throw new Error("PrismaClient should not be used in browser");
   }
+  const url =
+    process.env.DATABASE_URL ??
+    process.env.TURSO_DATABASE_URL ??
+    "file:prisma/dev.db";
   const adapter = new PrismaLibSQL({
-    url: process.env.DATABASE_URL ?? "file:prisma/dev.db",
+    url,
     authToken: process.env.TURSO_AUTH_TOKEN,
   });
   return new PrismaClient({ adapter });
