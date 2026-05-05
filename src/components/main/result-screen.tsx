@@ -28,6 +28,8 @@ export default function ResultScreen({
   const [showContent, setShowContent] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [favLoading, setFavLoading] = useState(true);
+  const [isMealSaved, setIsMealSaved] = useState(false);
+  const [mealLoading, setMealLoading] = useState(false);
   const mountTimeRef = useRef(Date.now());
   const ignoredLoggedRef = useRef(false);
   const sparklePositions = useRef(
@@ -85,6 +87,28 @@ export default function ResultScreen({
       setIsFavorited(!next);
     }
   }, [isFavorited, restaurant]);
+
+  const saveMealRecord = useCallback(async () => {
+    if (mealLoading || isMealSaved) return;
+    setMealLoading(true);
+    try {
+      const res = await fetch("/api/meals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: getUserId(),
+          restaurant,
+          category: badge,
+        }),
+      });
+      if (!res.ok) throw new Error("meal save failed");
+      setIsMealSaved(true);
+    } catch {
+      // noop
+    } finally {
+      setMealLoading(false);
+    }
+  }, [badge, isMealSaved, mealLoading, restaurant]);
 
   // result_ignored: 30초 내 이탈 감지
   useEffect(() => {
@@ -294,6 +318,21 @@ export default function ResultScreen({
               네이버맵으로 보기
             </a>
           </motion.div>
+
+          <motion.button
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.5 }}
+            onClick={saveMealRecord}
+            disabled={mealLoading || isMealSaved}
+            className={`w-full h-12 rounded-xl font-semibold text-sm mb-5 transition-colors ${
+              isMealSaved
+                ? "bg-orange-100 text-[#FF6B35]"
+                : "bg-[#FF6B35] text-white hover:opacity-90"
+            } disabled:opacity-70`}
+          >
+            {mealLoading ? "저장 중..." : isMealSaved ? "기록 완료 ✅" : "이거 먹었어요 🍽️"}
+          </motion.button>
 
           <motion.button
             initial={{ opacity: 0 }}

@@ -45,6 +45,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "userId and restaurant required" }, { status: 400 });
     }
 
+    // userId가 users 테이블에 없으면 FK 위반으로 실패 → 먼저 upsert로 보장
+    await prisma.user.upsert({
+      where: { id: userId },
+      create: { id: userId },
+      update: {},
+    });
+
     const dbRestaurant = await prisma.restaurant.upsert({
       where: { kakaoPlaceId: restaurant.id },
       update: {
