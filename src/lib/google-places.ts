@@ -146,7 +146,7 @@ async function getPlaceInfo(
 
     // Build URL list for all photos (landscape-first)
     const photoUrls = sorted.map(
-      (p) => `${PLACES_BASE}/${p.name}/media?maxWidthPx=800&key=${API_KEY}`
+      (p) => `/api/photo/${p.name}?maxWidthPx=800`
     );
     const photoUrl = photoUrls[0] ?? null;
 
