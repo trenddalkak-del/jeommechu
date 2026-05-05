@@ -55,6 +55,23 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function PATCH(request: NextRequest) {
+  try {
+    const { id, restaurantName } = await request.json();
+    if (!id || !restaurantName) {
+      return NextResponse.json({ error: "id and restaurantName required" }, { status: 400 });
+    }
+    const updated = await prisma.meal_records.update({
+      where: { id },
+      data: { restaurant_name: restaurantName },
+    });
+    return NextResponse.json(updated);
+  } catch (error) {
+    console.error("Meal update error:", error);
+    return NextResponse.json({ error: "Failed to update" }, { status: 500 });
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
