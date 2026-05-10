@@ -140,19 +140,19 @@ async function getPlaceInfo(
       return { photoUrl: null, photoUrlThumb: null, photoUrls: [], openNow, types };
     }
 
-    // Sort: landscape (width >= height) first, then portrait
+    // Sort: portrait (height > width) first, then landscape
+    const portrait = photos.filter((p) => p.heightPx > p.widthPx);
     const landscape = photos.filter((p) => p.widthPx >= p.heightPx);
-    const portrait = photos.filter((p) => p.widthPx < p.heightPx);
-    const sorted = [...landscape, ...portrait];
+    const sorted = [...portrait, ...landscape];
 
-    // Build URL list for all photos (landscape-first)
+    // Build URL list for all photos (portrait-first)
     const photoUrls = sorted.map(
       (p) => `/api/photo/${p.name}?maxWidthPx=800`
     );
     const photoUrl = photoUrls[0] ?? null;
     const photoUrlThumb = sorted[0] ? `/api/photo/${sorted[0].name}?maxWidthPx=400` : null;
 
-    console.log(`[GooglePlaces] ${name}: photo_url ${photoUrl ? "OK" : "null"}, ${photoUrls.length} URLs (${landscape.length} landscape)`);
+    console.log(`[GooglePlaces] ${name}: photo_url ${photoUrl ? "OK" : "null"}, ${photoUrls.length} URLs (${portrait.length} portrait)`);
 
     return { photoUrl, photoUrlThumb, photoUrls, openNow, types };
   } catch (err) {

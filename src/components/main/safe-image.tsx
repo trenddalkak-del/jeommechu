@@ -63,10 +63,10 @@ export default function SafeImage({
   }
 
   return (
-    <>
+    <div className={`relative w-full h-full ${className}`}>
       {/* Category-colored placeholder — fades out after image loads */}
       <div
-        className={`${className} transition-opacity duration-500 ${
+        className={`absolute inset-0 transition-opacity duration-500 ${
           imageStatus === "loaded" ? "opacity-0 pointer-events-none" : "opacity-100"
         }`}
         style={{ backgroundColor: placeholderColor }}
@@ -76,13 +76,13 @@ export default function SafeImage({
         key={currentUrl}
         src={currentUrl}
         alt={alt}
-        className={`${className} transition-opacity duration-500 ${
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
           imageStatus === "loaded" ? "opacity-100" : "opacity-0"
         }`}
         loading={loading}
         onLoad={() => setImageStatus("loaded")}
         onError={handleError}
       />
-    </>
+    </div>
   );
 }
