@@ -12,7 +12,12 @@ export default function ProfileHeader({ onSettingsOpen }: ProfileHeaderProps) {
   const { data: session, status } = useSession();
   const name = session?.user?.name ?? null;
   const image = session?.user?.image ?? null;
-  const isLoggedIn = status === "authenticated" && !!name;
+  const isLoggedIn = status === "authenticated";
+  const displayName = name || "사용자";
+
+  const handleSignIn = async () => {
+    await signIn("kakao", { callbackUrl: "/history" });
+  };
 
   return (
     <div className="flex items-center justify-between px-5 pt-12 pb-4">
@@ -23,7 +28,7 @@ export default function ProfileHeader({ onSettingsOpen }: ProfileHeaderProps) {
               {image ? (
                 <Image
                   src={image}
-                  alt={name}
+                  alt={displayName}
                   width={48}
                   height={48}
                   className="w-full h-full object-cover"
@@ -31,12 +36,12 @@ export default function ProfileHeader({ onSettingsOpen }: ProfileHeaderProps) {
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-400 text-lg font-bold">
-                  {name.charAt(0)}
+                  {displayName.charAt(0)}
                 </div>
               )}
             </div>
             <div>
-              <p className="text-lg font-bold text-gray-900">{name}님의</p>
+              <p className="text-lg font-bold text-gray-900">{displayName}님의</p>
               <p className="text-sm text-gray-400">식사기록</p>
             </div>
           </>
@@ -56,7 +61,7 @@ export default function ProfileHeader({ onSettingsOpen }: ProfileHeaderProps) {
             <div>
               <p className="text-base font-bold text-gray-900">로그인해주세요</p>
               <button
-                onClick={() => signIn("kakao")}
+                onClick={handleSignIn}
                 className="mt-1 text-xs text-white bg-[#FEE500] text-[#191919] font-semibold px-3 py-1 rounded-full"
               >
                 카카오 로그인

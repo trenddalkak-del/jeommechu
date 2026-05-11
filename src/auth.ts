@@ -51,19 +51,31 @@ export const {
       return token;
     },
     async session({ session, token }) {
-      if (token.kakaoId) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const user = (session as any).user;
-        user.kakaoId = token.kakaoId as string;
-        user.id = token.sub || "";
-        user.name = (token.name as string | undefined) ?? null;
-        user.email = (token.email as string | undefined) ?? null;
-        user.image = (token.picture as string | undefined) ?? null;
-      }
-      return session;
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: token.sub || "",
+          kakaoId: (token.kakaoId as string | undefined) || "",
+          name: (token.name as string | undefined) ?? null,
+          email: (token.email as string | undefined) ?? null,
+          image: (token.picture as string | undefined) ?? null,
+        },
+      };
     },
   },
   pages: {
     signIn: "/",
+  },
+  cookies: {
+    sessionToken: {
+      name: `__Secure-next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
   },
 });

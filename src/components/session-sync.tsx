@@ -32,5 +32,12 @@ export default function SessionSync() {
     }
   }, [session, status]);
 
+  // 세션 상태가 authenticated로 변경되면 페이지 새로고침하여 UI 갱신
+  useEffect(() => {
+    if (status === "authenticated") {
+      window.location.reload();
+    }
+  }, [status]);
+
   return null;
 }
