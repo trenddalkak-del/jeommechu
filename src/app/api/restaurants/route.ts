@@ -11,6 +11,8 @@ import {
 
 // Categories to always exclude (cafes, desserts)
 const EXCLUDED_CATEGORIES = ["카페", "베이커리", "디저트", "제과", "커피"];
+// Radius expansion steps (meters) for auto-expand when results < 10
+const EXPAND_RADII = [800, 1200, 1600, 2000];
 
 function shouldExclude(categoryName: string): boolean {
   return EXCLUDED_CATEGORIES.some((exc) => categoryName.includes(exc));
@@ -31,9 +33,8 @@ export async function GET(request: NextRequest) {
       searchParams.get("ignoreMealHistory") === "true";
 
     // Convert walking minutes to meters (5min=400m, 10min=800m, 15min=1200m, 20min=1600m)
-    // If explicit radius (meters) is provided (from settings), it takes precedence
     const explicitRadius = searchParams.get("radius");
-    const radius = explicitRadius ? parseInt(explicitRadius) : distanceMin * 80;
+    const initialRadius = explicitRadius ? parseInt(explicitRadius) : distanceMin * 80;
 
     // Current server time (Korea Standard Time = UTC+9)
     const nowHour = new Date(
@@ -42,47 +43,50 @@ export async function GET(request: NextRequest) {
 
     const sortParam = (searchParams.get("sort") || "distance") as "distance" | "accuracy";
 
-    const [weather, result] = await Promise.all([
-      getCurrentWeather(lat, lng),
-      searchByCategory({ lat, lng, radius, size: 15, sort: sortParam }),
-    ]);
+    // Fetch weather once
+    const weather = await getCurrentWeather(lat, lng);
 
-    // Base filtering: exclude cafes/bakeries, allergies, time-based categories
-    const baseFiltered = result.documents.filter((r) => {
-      const cat = r.category_name || r.category_group_name || "";
-      if (shouldExclude(cat)) return false;
-      if (allergies.length > 0) {
-        const catLower = cat.toLowerCase();
-        if (allergies.some((a) => catLower.includes(a.toLowerCase()))) return false;
-      }
-      // Time-based: exclude bars/pubs during lunch
-      if (shouldExcludeByTimeCategory(cat, nowHour)) return false;
-      // Extreme weather: exclude far places during heavy rain/thunderstorm
-      if (shouldExcludeByExtremeWeather(parseInt(r.distance || "0"), weather)) return false;
-      return true;
-    }).sort((a, b) => parseInt(a.distance || "0") - parseInt(b.distance || "0"));
+    // Build list of radii to try: start with initialRadius, then expand
+    const radiiToTry = [initialRadius, ...EXPAND_RADII.filter((r) => r > initialRadius)];
 
-    // Fetch Google Places data (photo + open status + types)
-    const placeInfoMap = await batchGetPhotos(baseFiltered);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let withPlaceInfo: any[] = [];
 
-    // Attach photo_url, open_now, and google_types; filter out confirmed-closed places
-    const withPlaceInfo = baseFiltered
-      .map((r) => {
-        const info = placeInfoMap.get(r.place_name);
-        return {
-          ...r,
-          photo_url: info?.photoUrl || null,
-          photo_url_thumb: info?.photoUrlThumb || null,
-          photo_urls: info?.photoUrls || [],
-          open_now: info?.openNow, // undefined = no info
-          google_types: info?.types, // for hashtags
-        };
-      })
-      .filter((r) => r.open_now !== false) // exclude confirmed closed
-      .filter((r) => !!r.photo_url && r.photo_url.length > 0); // exclude no photo
+    for (const tryRadius of radiiToTry) {
+      const result = await searchByCategory({ lat, lng, radius: tryRadius, size: 15, sort: sortParam });
 
-    // Total after all filters (before capping at 10) — used for "not enough stores" UI
-    const totalFound = withPlaceInfo.length;
+      const baseFiltered = result.documents.filter((r) => {
+        const cat = r.category_name || r.category_group_name || "";
+        if (shouldExclude(cat)) return false;
+        if (allergies.length > 0) {
+          const catLower = cat.toLowerCase();
+          if (allergies.some((a) => catLower.includes(a.toLowerCase()))) return false;
+        }
+        if (shouldExcludeByTimeCategory(cat, nowHour)) return false;
+        if (shouldExcludeByExtremeWeather(parseInt(r.distance || "0"), weather)) return false;
+        return true;
+      }).sort((a, b) => parseInt(a.distance || "0") - parseInt(b.distance || "0"));
+
+      const placeInfoMap = await batchGetPhotos(baseFiltered);
+
+      const filtered = baseFiltered
+        .map((r) => {
+          const info = placeInfoMap.get(r.place_name);
+          return {
+            ...r,
+            photo_url: info?.photoUrl || null,
+            photo_url_thumb: info?.photoUrlThumb || null,
+            photo_urls: info?.photoUrls || [],
+            open_now: info?.openNow,
+            google_types: info?.types,
+          };
+        })
+        .filter((r) => r.open_now !== false)
+        .filter((r) => !!r.photo_url && r.photo_url.length > 0);
+
+      withPlaceInfo = filtered;
+      if (filtered.length >= 10) break;
+    }
 
     const capped = withPlaceInfo.slice(0, 10);
 
@@ -102,7 +106,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       weather,
       restaurants: personalized,
-      totalFound,
+      totalFound: withPlaceInfo.length,
       distanceMin,
     });
   } catch (error) {

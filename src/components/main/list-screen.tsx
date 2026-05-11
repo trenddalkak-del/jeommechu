@@ -13,11 +13,6 @@ const DISTANCE_OPTIONS = [
   { label: "15분", value: 15, radius: 1200 },
   { label: "20분", value: 20, radius: 1600 },
 ];
-function getNextDistance(current: number): number | null {
-  const idx = DISTANCE_OPTIONS.findIndex((o) => o.value === current);
-  if (idx === -1 || idx >= DISTANCE_OPTIONS.length - 1) return null;
-  return DISTANCE_OPTIONS[idx + 1].value;
-}
 export default function ListScreen({
   restaurants,
   weather,
@@ -25,7 +20,6 @@ export default function ListScreen({
   onStartSwipe,
   onRetry,
   distanceMin = 10,
-  totalFound,
   yesterdayCategory,
   sort = "distance",
   onAccuracySearch,
@@ -37,7 +31,6 @@ export default function ListScreen({
   onRetry?: () => void;
   onIgnoreMealHistory?: () => void;
   distanceMin?: number;
-  totalFound?: number | null;
   yesterdayCategory?: string | null;
   sort?: "distance" | "accuracy";
   onAccuracySearch?: () => void;
@@ -99,15 +92,6 @@ export default function ListScreen({
   };
   const isEmpty = restaurants.length === 0 && !fetchError;
   const isError = !!fetchError;
-  // Insufficient stores warning: shown when < 10 results and there's a next distance option
-  const nextDistance = getNextDistance(selectedDistance);
-  const showInsufficientWarning =
-    !isError &&
-    !isEmpty &&
-    totalFound !== null &&
-    totalFound !== undefined &&
-    totalFound < 10 &&
-    nextDistance !== null;
   // Accuracy banner: shown when < 10 results and currently in distance mode
   const showAccuracyBanner =
     !isError &&
@@ -202,25 +186,6 @@ export default function ListScreen({
           </span>
         </div>
       </div>
-      {/* Insufficient stores warning */}
-      {showInsufficientWarning && (
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mx-5 mb-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between gap-3"
-        >
-          <p className="text-amber-700 text-sm leading-snug flex-1">
-            {radiusLabel} 거리 가게는 {totalFound}개밖에 없어요.{" "}
-            {nextDistance}분 거리도 괜찮아요?
-          </p>
-          <button
-            onClick={() => handleDistanceChange(nextDistance!)}
-            className="shrink-0 text-xs font-semibold text-white bg-amber-500 hover:bg-amber-600 px-3 py-1.5 rounded-xl transition-colors"
-          >
-            {nextDistance}분으로 재검색
-          </button>
-        </motion.div>
-      )}
       {/* Accuracy banner */}
       {showAccuracyBanner && (
         <motion.div

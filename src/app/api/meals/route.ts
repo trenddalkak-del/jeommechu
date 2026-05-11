@@ -84,6 +84,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "userId required" }, { status: 400 });
     }
 
+    // KST offset: UTC+9 = 9 * 60 * 60 * 1000 ms
+    const KST_OFFSET = 9 * 60 * 60 * 1000;
+
     let eatenAtFilter: { gte?: Date; lt?: Date } = {};
     if (month) {
       const [yearStr, monthStr] = month.split("-");
@@ -92,9 +95,10 @@ export async function GET(request: NextRequest) {
       if (!Number.isFinite(year) || !Number.isFinite(monthIndex) || monthIndex < 0 || monthIndex > 11) {
         return NextResponse.json({ error: "invalid month format (YYYY-MM)" }, { status: 400 });
       }
-      const start = new Date(year, monthIndex, 1);
-      const end = new Date(year, monthIndex + 1, 1);
-      eatenAtFilter = { gte: start, lt: end };
+      // Use KST-based range: KST midnight = UTC midnight - 9h
+      const startKST = new Date(Date.UTC(year, monthIndex, 1) - KST_OFFSET);
+      const endKST = new Date(Date.UTC(year, monthIndex + 1, 1) - KST_OFFSET);
+      eatenAtFilter = { gte: startKST, lt: endKST };
     } else {
       const since = new Date();
       since.setDate(since.getDate() - days);
@@ -111,7 +115,23 @@ export async function GET(request: NextRequest) {
       take: limit > 0 ? limit : undefined,
     });
 
-    return NextResponse.json({ meals: records, month: month ?? null });
+    // Transform snake_case Prisma fields to camelCase for the frontend
+    const meals = records.map((r) => ({
+      id: r.id,
+      category: r.category,
+      eatenAt: r.eaten_at,
+      restaurantName: r.restaurant_name,
+      photoUrl: r.photo_url,
+      restaurant: r.restaurants
+        ? {
+            name: r.restaurants.name,
+            category: r.restaurants.category,
+            kakaoPlaceId: r.restaurants.kakao_place_id,
+          }
+        : null,
+    }));
+
+    return NextResponse.json({ meals, month: month ?? null });
   } catch (error) {
     console.error("Meal records fetch error:", error);
     return NextResponse.json(

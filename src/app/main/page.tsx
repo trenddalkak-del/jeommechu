@@ -50,7 +50,6 @@ export default function MainPage() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [ignoreMealHistory, setIgnoreMealHistory] = useState(false);
   const [distanceMin, setDistanceMin] = useState(10);
-  const [totalFound, setTotalFound] = useState<number | null>(null);
   const [yesterdayCategory, setYesterdayCategory] = useState<string | null>(null);
   const [sort, setSort] = useState<"distance" | "accuracy">("distance");
 
@@ -147,7 +146,6 @@ export default function MainPage() {
 
         setRestaurants(data.restaurants || []);
         setWeather(data.weather || null);
-        setTotalFound(data.totalFound ?? null);
         setPhase("list");
       } catch (err) {
         console.error("Failed to load:", err);
@@ -169,7 +167,6 @@ export default function MainPage() {
     setRestaurants([]);
     setWeather(null);
     setFetchError(null);
-    setTotalFound(null);
     setPhase("loading");
   };
 
@@ -178,7 +175,6 @@ export default function MainPage() {
     setRestaurants([]);
     setWeather(null);
     setFetchError(null);
-    setTotalFound(null);
     setPhase("loading");
   };
 
@@ -187,7 +183,6 @@ export default function MainPage() {
     setRestaurants([]);
     setWeather(null);
     setFetchError(null);
-    setTotalFound(null);
     setPhase("loading");
   };
 
@@ -217,7 +212,6 @@ export default function MainPage() {
             onRetry={handleRetry}
             onIgnoreMealHistory={ignoreMealHistory ? undefined : handleIgnoreMealHistory}
             distanceMin={distanceMin}
-            totalFound={totalFound}
             yesterdayCategory={yesterdayCategory}
             sort={sort}
             onAccuracySearch={handleAccuracySearch}
