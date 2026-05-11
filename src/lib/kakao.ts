@@ -63,15 +63,16 @@ export async function searchByCategory(params: {
   radius?: number;
   page?: number;
   size?: number;
+  sort?: "distance" | "accuracy";
 }): Promise<KakaoSearchResponse> {
-  const { lat, lng, radius = 10000, page = 1, size = 15 } = params;
+  const { lat, lng, radius = 10000, page = 1, size = 15, sort = "distance" } = params;
 
   const url = new URL(`${KAKAO_BASE_URL}/search/category.json`);
   url.searchParams.set("category_group_code", "FD6");
   url.searchParams.set("y", String(lat));
   url.searchParams.set("x", String(lng));
   url.searchParams.set("radius", String(radius));
-  url.searchParams.set("sort", "distance");
+  url.searchParams.set("sort", sort);
   url.searchParams.set("page", String(page));
   url.searchParams.set("size", String(size));
 

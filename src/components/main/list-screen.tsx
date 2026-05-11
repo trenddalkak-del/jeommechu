@@ -24,10 +24,11 @@ export default function ListScreen({
   fetchError,
   onStartSwipe,
   onRetry,
-  onIgnoreMealHistory,
   distanceMin = 10,
   totalFound,
   yesterdayCategory,
+  sort = "distance",
+  onAccuracySearch,
 }: {
   restaurants: Restaurant[];
   weather: WeatherInfo | null;
@@ -38,12 +39,19 @@ export default function ListScreen({
   distanceMin?: number;
   totalFound?: number | null;
   yesterdayCategory?: string | null;
+  sort?: "distance" | "accuracy";
+  onAccuracySearch?: () => void;
 }) {
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
   const [showDistancePicker, setShowDistancePicker] = useState(false);
   const [selectedDistance, setSelectedDistance] = useState(distanceMin);
   const [greeting, setGreeting] = useState("오늘의 점메추");
+  const [sortMode, setSortMode] = useState<"distance" | "accuracy">(sort);
+  // Sync sortMode when sort prop changes
+  useEffect(() => {
+    setSortMode(sort);
+  }, [sort]);
   // Sync selectedDistance when prop changes
   useEffect(() => {
     setSelectedDistance(distanceMin);
@@ -85,6 +93,10 @@ export default function ListScreen({
     setShowDistancePicker(false);
     onRetry?.();
   };
+  const handleAccuracyClick = () => {
+    setSortMode("accuracy");
+    onAccuracySearch?.();
+  };
   const isEmpty = restaurants.length === 0 && !fetchError;
   const isError = !!fetchError;
   // Insufficient stores warning: shown when < 10 results and there's a next distance option
@@ -96,6 +108,12 @@ export default function ListScreen({
     totalFound !== undefined &&
     totalFound < 10 &&
     nextDistance !== null;
+  // Accuracy banner: shown when < 10 results and currently in distance mode
+  const showAccuracyBanner =
+    !isError &&
+    !isEmpty &&
+    restaurants.length < 10 &&
+    sortMode === "distance";
   const radiusLabel = DISTANCE_OPTIONS.find((o) => o.value === selectedDistance)?.label || `${selectedDistance}분`;
   const radiusM = (selectedDistance || 10) * 80;
   return (
@@ -178,24 +196,10 @@ export default function ListScreen({
             <span className="text-gray-500 text-sm">{weather.temp.toFixed(0)}°C · {weather.description}</span>
           </motion.div>
         )}
-        <div className="flex items-center justify-between mt-1">
-          <button
-            onClick={() => setShowDistancePicker(true)}
-            className="text-gray-400 text-xs hover:text-[#FF6B35] transition-colors"
-          >
-            반경 {radiusM}m ({radiusLabel}) · 가까운 순 ›
-          </button>
-          {onIgnoreMealHistory && (
-            <motion.button
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              onClick={onIgnoreMealHistory}
-              className="text-xs text-[#FF6B35] underline underline-offset-2"
-            >
-              다시 보기
-            </motion.button>
-          )}
+        <div className="flex items-center mt-1">
+          <span className="text-gray-400 text-xs">
+            반경 {radiusM}m ({radiusLabel}) · {sortMode === "distance" ? "가까운 순" : "추천순"}
+          </span>
         </div>
       </div>
       {/* Insufficient stores warning */}
@@ -214,6 +218,24 @@ export default function ListScreen({
             className="shrink-0 text-xs font-semibold text-white bg-amber-500 hover:bg-amber-600 px-3 py-1.5 rounded-xl transition-colors"
           >
             {nextDistance}분으로 재검색
+          </button>
+        </motion.div>
+      )}
+      {/* Accuracy banner */}
+      {showAccuracyBanner && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mx-5 mb-3 px-4 py-3 bg-orange-50 border border-orange-200 rounded-2xl flex items-center justify-between gap-3"
+        >
+          <p className="text-orange-700 text-sm leading-snug flex-1">
+            찾는 맛집이 없나요? 거리순 말고 추천순으로 보기
+          </p>
+          <button
+            onClick={handleAccuracyClick}
+            className="shrink-0 text-xs font-semibold text-white bg-[#FF6B35] hover:bg-[#e55e2e] px-3 py-1.5 rounded-xl transition-colors"
+          >
+            추천순으로 보기
           </button>
         </motion.div>
       )}
@@ -262,7 +284,6 @@ export default function ListScreen({
           {restaurants.map((r, i) => {
             const imgSrc = r.photo_url_thumb || r.photo_url || null;
             const distMin = r.distance ? Math.round(parseInt(r.distance) / 80) : null;
-            // 카테고리 파싱
             const { badge } = parseCategory(r.category_name || r.category_group_name);
             const hashtags = generateHashtags(
               r.category_name || r.category_group_name,
@@ -283,19 +304,16 @@ export default function ListScreen({
                       {r.place_name}
                     </h3>
                     <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                      {/* 카테고리 배지 */}
                       <span className="text-xs bg-[#FF6B35] text-white px-2 py-0.5 rounded-full font-medium">
                         {badge}
                       </span>
-                      {/* 해시태그 */}
                       {hashtags.map((tag, idx) => (
                         <span key={idx} className="text-xs text-gray-500">
                           #{tag}
                         </span>
                       ))}
-                    </div>                    
+                    </div>
                     <div className="flex items-center gap-2 mt-1.5">
-                      {/* Open / Closed badge */}
                       {r.open_now === true && (
                         <span className="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-medium border border-green-100">
                           영업중

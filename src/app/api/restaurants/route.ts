@@ -40,9 +40,11 @@ export async function GET(request: NextRequest) {
       new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" })
     ).getHours();
 
+    const sortParam = (searchParams.get("sort") || "distance") as "distance" | "accuracy";
+
     const [weather, result] = await Promise.all([
       getCurrentWeather(lat, lng),
-      searchByCategory({ lat, lng, radius, size: 15 }),
+      searchByCategory({ lat, lng, radius, size: 15, sort: sortParam }),
     ]);
 
     // Base filtering: exclude cafes/bakeries, allergies, time-based categories

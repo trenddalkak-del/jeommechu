@@ -52,6 +52,7 @@ export default function MainPage() {
   const [distanceMin, setDistanceMin] = useState(10);
   const [totalFound, setTotalFound] = useState<number | null>(null);
   const [yesterdayCategory, setYesterdayCategory] = useState<string | null>(null);
+  const [sort, setSort] = useState<"distance" | "accuracy">("distance");
 
   useEffect(() => {
     const stored = localStorage.getItem("onboarding");
@@ -133,7 +134,7 @@ export default function MainPage() {
         } catch { /* ignore */ }
 
         const res = await fetch(
-          `/api/restaurants?lat=${currentLat}&lng=${currentLng}&userId=local-user&ignoreMealHistory=${ignoreMealHistory}&distanceMin=${currentDistanceMin}${radiusParam}`
+          `/api/restaurants?lat=${currentLat}&lng=${currentLng}&userId=local-user&ignoreMealHistory=${ignoreMealHistory}&distanceMin=${currentDistanceMin}${radiusParam}&sort=${sort}`
         );
 
         if (!res.ok) {
@@ -164,6 +165,16 @@ export default function MainPage() {
   }, [phase, lat, lng, ignoreMealHistory, distanceMin]);
 
   const handleRetry = () => {
+    setSort("distance");
+    setRestaurants([]);
+    setWeather(null);
+    setFetchError(null);
+    setTotalFound(null);
+    setPhase("loading");
+  };
+
+  const handleAccuracySearch = () => {
+    setSort("accuracy");
     setRestaurants([]);
     setWeather(null);
     setFetchError(null);
@@ -208,6 +219,8 @@ export default function MainPage() {
             distanceMin={distanceMin}
             totalFound={totalFound}
             yesterdayCategory={yesterdayCategory}
+            sort={sort}
+            onAccuracySearch={handleAccuracySearch}
           />
         )}
         {phase === "swipe" && (
