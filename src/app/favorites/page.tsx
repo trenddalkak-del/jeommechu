@@ -19,98 +19,6 @@ interface FavoriteItem {
   };
 }
 
-const CATEGORY_EMOJI: Record<string, string> = {
-  한식: "🍲",
-  일식: "🍣",
-  중식: "🥢",
-  양식: "🍝",
-  패스트푸드: "🍔",
-  카페: "☕",
-  분식: "🥚",
-  치킨: "🍗",
-  피자: "🍕",
-  술집: "🍺",
-};
-
-const CATEGORY_GRADIENT: Record<string, [string, string]> = {
-  한식: ["#FFEDE3", "#FFD4BD"],
-  일식: ["#E3EDFF", "#BDD4FF"],
-  중식: ["#FFE3E3", "#FFBDBD"],
-  양식: ["#E3FFE9", "#BDFFD0"],
-  패스트푸드: ["#FFF8E3", "#FFE8BD"],
-  카페: ["#FFF3E3", "#FFE0BD"],
-  분식: ["#FFE3F5", "#FFBDE8"],
-  치킨: ["#FFEDE3", "#FFD9BD"],
-  피자: ["#FFE8E3", "#FFCABD"],
-  술집: ["#EDE3FF", "#D4BDFF"],
-};
-
-function getCategoryEmoji(category: string): string {
-  for (const [key, emoji] of Object.entries(CATEGORY_EMOJI)) {
-    if (category.includes(key)) return emoji;
-  }
-  return "🍽️";
-}
-
-function getCategoryGradientColors(category: string): [string, string] {
-  for (const [key, colors] of Object.entries(CATEGORY_GRADIENT)) {
-    if (category.includes(key)) return colors;
-  }
-  return ["#FFE8E0", "#FFD0BD"];
-}
-
-// ─────────────────────────────────────────────
-// Card component
-// ─────────────────────────────────────────────
-function FavoriteCard({
-  fav,
-  onClick,
-}: {
-  fav: FavoriteItem;
-  onClick: () => void;
-}) {
-  const { badge } = parseCategory(fav.restaurant.category);
-  const emoji = getCategoryEmoji(fav.restaurant.category);
-  const [from, to] = getCategoryGradientColors(fav.restaurant.category);
-
-  return (
-    <motion.button
-      onClick={onClick}
-      whileTap={{ scale: 0.96 }}
-      className="w-full rounded-2xl overflow-hidden shadow-sm bg-white text-left"
-    >
-      <div
-        className="relative w-full"
-        style={{
-          aspectRatio: "3/4",
-          background: `linear-gradient(135deg, ${from} 0%, ${to} 100%)`,
-        }}
-      >
-        <div className="absolute inset-0 flex items-center justify-center text-5xl select-none">
-          {emoji}
-        </div>
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(to top, rgba(0,0,0,0.58) 0%, rgba(0,0,0,0.1) 45%, transparent 60%)",
-          }}
-        />
-        <div className="absolute bottom-0 left-0 right-0 p-3">
-          <p className="text-white font-bold text-[13px] leading-snug line-clamp-2 drop-shadow">
-            {fav.restaurant.name}
-          </p>
-        </div>
-      </div>
-      <div className="px-3 py-2">
-        <span className="text-xs bg-orange-50 text-[#FF6B35] px-2 py-0.5 rounded-full font-medium">
-          {badge}
-        </span>
-      </div>
-    </motion.button>
-  );
-}
-
 // ─────────────────────────────────────────────
 // Detail view
 // ─────────────────────────────────────────────
@@ -128,12 +36,9 @@ function FavoriteDetail({
 
   const { badge } = parseCategory(fav.restaurant.category);
   const hashtags = generateHashtags(fav.restaurant.category, undefined);
-  const emoji = getCategoryEmoji(fav.restaurant.category);
-  const [from, to] = getCategoryGradientColors(fav.restaurant.category);
 
   const lat = fav.restaurant.lat ?? 0;
   const lng = fav.restaurant.lng ?? 0;
-  // y=lat, x=lng — matching result-screen.tsx convention
   const kakaoMapUrl = `https://map.kakao.com/link/to/${encodeURIComponent(fav.restaurant.name)},${lat},${lng}`;
   const naverMapUrl = `https://map.naver.com/v5/directions/-/${lat},${lng},${encodeURIComponent(fav.restaurant.name)},-/walk`;
 
@@ -182,28 +87,11 @@ function FavoriteDetail({
       transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
       className="min-h-screen bg-gray-50 pb-24"
     >
-      {/* Big photo area — 3:4 */}
-      <div
-        className="relative w-full"
-        style={{
-          aspectRatio: "3/4",
-          background: `linear-gradient(135deg, ${from} 0%, ${to} 100%)`,
-        }}
-      >
-        <div className="absolute inset-0 flex items-center justify-center text-8xl select-none">
-          {emoji}
-        </div>
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 35%, transparent 55%)",
-          }}
-        />
-        {/* Back button — top left */}
+      {/* Header with back button */}
+      <div className="px-5 pt-12 pb-4 flex items-center gap-3">
         <button
           onClick={onBack}
-          className="absolute top-12 left-4 z-20 w-11 h-11 rounded-full bg-black/25 backdrop-blur-sm flex items-center justify-center transition-transform active:scale-90"
+          className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center transition-transform active:scale-90"
           aria-label="뒤로가기"
         >
           <svg
@@ -211,7 +99,7 @@ function FavoriteDetail({
             height="20"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="white"
+            stroke="currentColor"
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -219,36 +107,37 @@ function FavoriteDetail({
             <path d="M19 12H5M12 5l-7 7 7 7" />
           </svg>
         </button>
-        {/* Heart (unfavorite) button — top right */}
-        <button
-          onClick={removeFavorite}
-          className="absolute top-12 right-4 z-20 w-11 h-11 rounded-full bg-black/25 backdrop-blur-sm flex items-center justify-center transition-transform active:scale-90"
-          aria-label="즐겨찾기 해제"
-        >
-          <svg
-            width="22"
-            height="22"
-            viewBox="0 0 24 24"
-            fill="#FF6B35"
-            stroke="#FF6B35"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{ filter: "drop-shadow(0 0 4px rgba(255,107,53,0.6))" }}
-          >
-            <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-          </svg>
-        </button>
-        {/* Restaurant name — bottom overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 z-10">
-          <h2 className="text-[28px] font-bold text-white leading-tight">
-            {fav.restaurant.name}
-          </h2>
-        </div>
+        <h1 className="text-xl font-bold text-gray-900">식당 상세</h1>
       </div>
 
-      {/* Content below photo */}
-      <div className="px-5 pt-5 flex flex-col gap-5">
+      <div className="px-5 flex flex-col gap-5">
+        {/* Restaurant name */}
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">{fav.restaurant.name}</h2>
+            <p className="text-sm text-[#FF6B35] font-medium mt-1">{fav.restaurant.category}</p>
+          </div>
+          {/* Heart (unfavorite) button */}
+          <button
+            onClick={removeFavorite}
+            className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center transition-transform active:scale-90 flex-shrink-0"
+            aria-label="즐겨찾기 해제"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="#FF6B35"
+              stroke="#FF6B35"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+            </svg>
+          </button>
+        </div>
+
         {/* Category badge + hashtags */}
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm bg-[#FF6B35] text-white px-3 py-1 rounded-full font-medium">
@@ -316,6 +205,13 @@ export default function FavoritesPage() {
       .catch(() => setLoading(false));
   }, []);
 
+  const removeFavorite = async (kakaoPlaceId: string) => {
+    setFavorites((prev) => prev.filter((f) => f.restaurant.kakaoPlaceId !== kakaoPlaceId));
+    await fetch(`/api/favorites?userId=${getUserId()}&kakaoPlaceId=${encodeURIComponent(kakaoPlaceId)}`, {
+      method: "DELETE",
+    }).catch(console.error);
+  };
+
   const handleUnfavorited = useCallback(() => {
     if (!selected) return;
     setFavorites((prev) =>
@@ -338,7 +234,7 @@ export default function FavoritesPage() {
           />
         ) : (
           <motion.div
-            key="grid"
+            key="list"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -373,24 +269,57 @@ export default function FavoritesPage() {
                 </p>
               </div>
             ) : (
-              <div className="px-4 grid grid-cols-2 gap-3">
+              <ul className="px-4 flex flex-col gap-3">
                 <AnimatePresence initial={false}>
                   {favorites.map((fav) => (
-                    <motion.div
+                    <motion.li
                       key={fav.id}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{
-                        opacity: 0,
-                        scale: 0.9,
-                        transition: { duration: 0.15 },
-                      }}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, x: -40, transition: { duration: 0.2 } }}
+                      className="bg-white rounded-2xl px-4 py-4 shadow-sm"
                     >
-                      <FavoriteCard fav={fav} onClick={() => setSelected(fav)} />
-                    </motion.div>
+                      <button
+                        onClick={() => setSelected(fav)}
+                        className="w-full text-left"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">
+                              <span className="text-xl">🍽️</span>
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-gray-900 truncate">{fav.restaurant.name}</p>
+                              <p className="text-sm text-[#FF6B35] font-medium">{fav.restaurant.category}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                      <div className="flex items-center justify-between mt-3">
+                        <button
+                          onClick={() => removeFavorite(fav.restaurant.kakaoPlaceId)}
+                          className="text-sm text-gray-400 hover:text-red-400 transition-colors flex items-center gap-1"
+                          aria-label="즐겨찾기 해제"
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="#FF6B35"
+                            stroke="#FF6B35"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+                          </svg>
+                          <span>해제</span>
+                        </button>
+                      </div>
+                    </motion.li>
                   ))}
                 </AnimatePresence>
-              </div>
+              </ul>
             )}
           </motion.div>
         )}
