@@ -3,6 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 const API_KEY = process.env.GOOGLE_PLACES_API_KEY!;
 const PLACES_BASE = "https://places.googleapis.com/v1";
 
+// 간단한 메모리 캐시: photoName → { buffer, contentType, timestamp }
+const cache = new Map<
+  string,
+  { buffer: ArrayBuffer; contentType: string; timestamp: number }
+>();
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1시간
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { slug?: string[] } }
@@ -16,6 +23,18 @@ export async function GET(
 
   const { searchParams } = new URL(request.url);
   const maxWidthPx = searchParams.get("maxWidthPx") || "800";
+
+  // 캐시 키: photoName + maxWidthPx
+  const cacheKey = `${photoName}::${maxWidthPx}`;
+  const cached = cache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return new NextResponse(cached.buffer, {
+      headers: {
+        "Content-Type": cached.contentType,
+        "Cache-Control": "public, max-age=604800",
+      },
+    });
+  }
 
   const googleUrl = `${PLACES_BASE}/${photoName}/media?maxWidthPx=${maxWidthPx}&key=${API_KEY}`;
 
@@ -31,6 +50,13 @@ export async function GET(
 
     const contentType = res.headers.get("content-type") || "image/jpeg";
     const arrayBuffer = await res.arrayBuffer();
+
+    // 캐시 저장
+    cache.set(cacheKey, {
+      buffer: arrayBuffer,
+      contentType,
+      timestamp: Date.now(),
+    });
 
     return new NextResponse(arrayBuffer, {
       headers: {

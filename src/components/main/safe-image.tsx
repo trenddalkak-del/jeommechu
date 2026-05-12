@@ -73,7 +73,6 @@ export default function SafeImage({
       />
       {/* Image — invisible until loaded, then fades in */}
       <img
-        key={currentUrl}
         src={currentUrl}
         alt={alt}
         className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
